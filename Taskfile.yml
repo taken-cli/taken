@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  GREETING: Hello, world!
+
+tasks:
+  default:
+    desc: Print a greeting message
+    cmds:
+      - echo "{{.GREETING}}"
+    silent: true
+
+  fmt:
+    desc: Format code with ruff
+    cmds:
+      - uv run ruff check --fix .
+      - uv run ruff format .
+
+  fmt:check:
+    desc: Check formatting and types (ruff + pyright)
+    aliases:
+      - check
+      - fmt-check
+    cmds:
+      - uv run ruff check .
+      - uv run pyright
+      - uv run ruff format --check --diff .
