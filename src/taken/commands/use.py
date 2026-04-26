@@ -9,11 +9,14 @@ from InquirerPy.enum import (
     INQUIRERPY_FILL_CIRCLE_SEQUENCE,
 )
 from rich.panel import Panel
+from rich.prompt import Confirm
 
 from taken.core.config import is_config_exists
+from taken.core.hashing import compute_skill_hash
 from taken.core.project import read_project_config, write_project_config
 from taken.core.registry import read_registry
-from taken.models.project import ProjectSkillEntry
+from taken.models.project import ProjectConfig, ProjectSkillEntry
+from taken.models.registry import RegistryEntry
 from taken.utils.console import console, err_console
 
 TAKEN_HOME = Path.home() / ".taken"
@@ -25,7 +28,7 @@ def use(
         help="Skill to copy into project, e.g. pradyothsp/hello-world. Omit for interactive picker.",
     ),
 ) -> None:
-    """Copy skill(s) from ~/.taken/ into the current project's .agents/ directory."""
+    """Copy skill(s) from ~/.taken/ into the current project's .agents/skills/ directory."""
     if not is_config_exists(TAKEN_HOME):
         err_console.print(
             Panel(
@@ -91,31 +94,61 @@ def use(
 
     now = datetime.now()
     copied: list[str] = []
+    skipped: list[str] = []
 
     for entry in selected:
-        src = TAKEN_HOME / "skills" / entry.namespace / entry.name
         dst = agents_dir / entry.name
+        existing = project_config.skills.get(entry.full_name)
 
-        if dst.exists():
-            shutil.rmtree(dst)
-        shutil.copytree(src, dst)
+        if dst.exists() and existing is not None:
+            local_hash = compute_skill_hash(dst)
+            if local_hash != existing.copied_hash:
+                console.print(
+                    f"\n[yellow]⚠[/yellow]  [bold]{entry.name}[/bold] has local changes in your project."
+                )
+                if not Confirm.ask(
+                    f"  Overwrite [bold]{entry.name}[/bold]?", default=False
+                ):
+                    skipped.append(entry.full_name)
+                    continue
 
-        project_config.skills[entry.full_name] = ProjectSkillEntry(
-            copied_at=now,
-            registry_version=entry.version,
-        )
+        _copy_skill(entry, dst, project_config, now)
         copied.append(
             f"[green]✓[/green] [bold]{entry.full_name}[/bold] → {project_config.skills_dir}/{entry.name}/"
         )
 
+    if not copied and not skipped:
+        return
+
     write_project_config(project_config, Path.cwd())
 
-    lines = "\n".join(copied) + "\n\n[dim]Tracked in .taken.yaml[/dim]"
-    console.print(
-        Panel(
-            lines,
-            title="[green]Skills Added[/green]",
-            border_style="green",
-            padding=(1, 2),
+    if copied:
+        lines = "\n".join(copied) + "\n\n[dim]Tracked in .taken.yaml[/dim]"
+        console.print(
+            Panel(
+                lines,
+                title="[green]Skills Added[/green]",
+                border_style="green",
+                padding=(1, 2),
+            )
         )
+    if skipped:
+        console.print(f"[dim]Skipped: {', '.join(skipped)}[/dim]")
+
+
+def _copy_skill(
+    entry: RegistryEntry,
+    dst: Path,
+    project_config: ProjectConfig,
+    now: datetime,
+) -> None:
+    src = TAKEN_HOME / "skills" / entry.namespace / entry.name
+
+    if dst.exists():
+        shutil.rmtree(dst)
+    shutil.copytree(src, dst)
+
+    project_config.skills[entry.full_name] = ProjectSkillEntry(
+        copied_at=now,
+        copied_hash=compute_skill_hash(dst),
     )

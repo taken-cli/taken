@@ -29,7 +29,7 @@ def write_project_config(config: ProjectConfig, project_root: Path) -> None:
         "skills": {
             key: {
                 "copied_at": entry.copied_at.isoformat(),
-                "registry_version": entry.registry_version,
+                "copied_hash": entry.copied_hash,
             }
             for key, entry in config.skills.items()
         },
@@ -54,7 +54,7 @@ def read_project_config(project_root: Path) -> ProjectConfig:
     skills = {
         key: ProjectSkillEntry(
             copied_at=datetime.fromisoformat(entry["copied_at"]),
-            registry_version=entry.get("registry_version"),
+            copied_hash=entry.get("copied_hash", ""),
         )
         for key, entry in (data.get("skills") or {}).items()
     }

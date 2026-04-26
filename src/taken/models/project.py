@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 class ProjectSkillEntry(BaseModel):
     copied_at: datetime
-    registry_version: str | None = None
+    copied_hash: str
 
 
 class ProjectConfig(BaseModel):
