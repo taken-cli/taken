@@ -16,10 +16,51 @@ from taken.core.hashing import compute_skill_hash
 from taken.core.project import read_project_config, write_project_config
 from taken.core.registry import read_registry
 from taken.models.project import ProjectConfig, ProjectSkillEntry
-from taken.models.registry import RegistryEntry
+from taken.models.registry import Registry, RegistryEntry
 from taken.utils.console import console, err_console
 
 TAKEN_HOME = Path.home() / ".taken"
+
+
+def _resolve_selected(
+    namespace_skill: str | None,
+    registry: Registry,
+) -> list[RegistryEntry]:
+    """Return the list of skills the user chose; raises typer.Exit on invalid input."""
+    if namespace_skill is not None:
+        entry = registry.get(namespace_skill)
+        if entry is None:
+            err_console.print(
+                Panel(
+                    f"[bold]{namespace_skill}[/bold] not found in registry.\n"
+                    "Run [bold]taken list[/bold] to see available skills.",
+                    title="[red]Skill Not Found[/red]",
+                    border_style="red",
+                )
+            )
+            raise typer.Exit(code=1)
+        return [entry]
+
+    choices = [
+        {"name": f"{e.full_name}  [{e.source.value}]", "value": e.full_name}
+        for e in sorted(registry.skills.values(), key=lambda e: e.full_name)
+    ]
+    selected_names: list[str] = inquirer.fuzzy(  # type: ignore[attr-defined]
+        message="Search skills:",
+        choices=choices,
+        multiselect=True,
+        marker=INQUIRERPY_FILL_CIRCLE_SEQUENCE,
+        marker_pl=INQUIRERPY_EMPTY_CIRCLE_SEQUENCE,
+        instruction="(type to filter  space/tab to select  enter to confirm)",
+        keybindings={"toggle": [{"key": "space"}, {"key": "tab"}]},
+        validate=lambda x: len(x) > 0,
+        invalid_message="Select at least one skill.",
+    ).execute()
+
+    if not selected_names:
+        raise typer.Exit(code=0)
+
+    return [e for name in selected_names if (e := registry.get(name)) is not None]
 
 
 def use(
@@ -51,42 +92,7 @@ def use(
         )
         raise typer.Exit(code=1)
 
-    if namespace_skill is not None:
-        entry = registry.get(namespace_skill)
-        if entry is None:
-            err_console.print(
-                Panel(
-                    f"[bold]{namespace_skill}[/bold] not found in registry.\n"
-                    "Run [bold]taken list[/bold] to see available skills.",
-                    title="[red]Skill Not Found[/red]",
-                    border_style="red",
-                )
-            )
-            raise typer.Exit(code=1)
-        selected = [entry]
-    else:
-        choices = [
-            {"name": f"{e.full_name}  [{e.source.value}]", "value": e.full_name}
-            for e in sorted(registry.skills.values(), key=lambda e: e.full_name)
-        ]
-        selected_names: list[str] = inquirer.fuzzy(  # type: ignore[attr-defined]
-            message="Search skills:",
-            choices=choices,
-            multiselect=True,
-            marker=INQUIRERPY_FILL_CIRCLE_SEQUENCE,
-            marker_pl=INQUIRERPY_EMPTY_CIRCLE_SEQUENCE,
-            instruction="(type to filter  space/tab to select  enter to confirm)",
-            keybindings={"toggle": [{"key": "space"}, {"key": "tab"}]},
-            validate=lambda x: len(x) > 0,
-            invalid_message="Select at least one skill.",
-        ).execute()
-
-        if not selected_names:
-            raise typer.Exit(code=0)
-
-        selected = [
-            e for name in selected_names if (e := registry.get(name)) is not None
-        ]
+    selected = _resolve_selected(namespace_skill, registry)
 
     project_config = read_project_config(Path.cwd())
     agents_dir = Path.cwd() / project_config.skills_dir
@@ -103,19 +109,13 @@ def use(
         if dst.exists() and existing is not None:
             local_hash = compute_skill_hash(dst)
             if local_hash != existing.copied_hash:
-                console.print(
-                    f"\n[yellow]⚠[/yellow]  [bold]{entry.name}[/bold] has local changes in your project."
-                )
-                if not Confirm.ask(
-                    f"  Overwrite [bold]{entry.name}[/bold]?", default=False
-                ):
+                console.print(f"\n[yellow]⚠[/yellow]  [bold]{entry.name}[/bold] has local changes in your project.")
+                if not Confirm.ask(f"  Overwrite [bold]{entry.name}[/bold]?", default=False):
                     skipped.append(entry.full_name)
                     continue
 
         _copy_skill(entry, dst, project_config, now)
-        copied.append(
-            f"[green]✓[/green] [bold]{entry.full_name}[/bold] → {project_config.skills_dir}/{entry.name}/"
-        )
+        copied.append(f"[green]✓[/green] [bold]{entry.full_name}[/bold] → {project_config.skills_dir}/{entry.name}/")
 
     if not copied and not skipped:
         return

@@ -10,5 +10,5 @@ def open_in_editor(path: Path) -> None:
     Detection order: $VISUAL → $EDITOR → vim.
     """
     raw = os.environ.get("VISUAL") or os.environ.get("EDITOR") or "vim"
-    argv = shlex.split(raw) + [str(path)]
+    argv = [*shlex.split(raw), str(path)]
     subprocess.run(argv)

@@ -24,9 +24,7 @@ _VALID_NAME = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]*$")
 
 
 def add(
-    skill_or_path: str = typer.Argument(
-        ..., help="Skill name to create, or path to existing skill folder to adopt"
-    ),
+    skill_or_path: str = typer.Argument(..., help="Skill name to create, or path to existing skill folder to adopt"),
 ) -> None:
     """Add a new personal skill or adopt an existing skill into taken management."""
     if not is_config_exists(TAKEN_HOME):
@@ -78,8 +76,7 @@ def _create_mode(name: str, config: TakenConfig) -> None:
     if registry.exists(full_name):
         err_console.print(
             Panel(
-                f"Skill [bold]{full_name}[/bold] is already in your registry.\n"
-                "Use [bold]taken list[/bold] to see it.",
+                f"Skill [bold]{full_name}[/bold] is already in your registry.\nUse [bold]taken list[/bold] to see it.",
                 title="[red]Already Exists[/red]",
                 border_style="red",
             )
@@ -98,7 +95,7 @@ def _create_mode(name: str, config: TakenConfig) -> None:
                 border_style="red",
             )
         )
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
 
     now = datetime.now()
     entry = RegistryEntry(
@@ -165,8 +162,7 @@ def _adopt_mode(path_str: str, config: TakenConfig) -> None:
     if registry.exists(full_name):
         err_console.print(
             Panel(
-                f"Skill [bold]{full_name}[/bold] is already in your registry.\n"
-                "Use [bold]taken list[/bold] to see it.",
+                f"Skill [bold]{full_name}[/bold] is already in your registry.\nUse [bold]taken list[/bold] to see it.",
                 title="[red]Already Exists[/red]",
                 border_style="red",
             )
@@ -184,7 +180,7 @@ def _adopt_mode(path_str: str, config: TakenConfig) -> None:
                 border_style="red",
             )
         )
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
 
     now = datetime.now()
     entry = RegistryEntry(

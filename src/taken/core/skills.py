@@ -1,6 +1,7 @@
 import json
 import shutil
 from pathlib import Path
+from typing import Any, cast
 
 from pydantic import BaseModel
 
@@ -32,29 +33,29 @@ def is_path_argument(arg: str) -> bool:
     return p.exists() and p.is_dir()
 
 
-def read_project_lock(cwd: Path) -> dict[str, dict]:
+def read_project_lock(cwd: Path) -> dict[str, dict[str, Any]]:
     """Read ./skills-lock.json (project-level, version 1).
 
     Returns empty dict if the file does not exist or is malformed.
     """
     lock_path = cwd / "skills-lock.json"
     try:
-        data = json.loads(lock_path.read_text(encoding="utf-8"))
-        return dict(data.get("skills", {}))
-    except FileNotFoundError, json.JSONDecodeError, KeyError, TypeError:
+        data = cast(dict[str, Any], json.loads(lock_path.read_text(encoding="utf-8")))
+        return cast(dict[str, dict[str, Any]], data.get("skills", {}))
+    except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError):
         return {}
 
 
-def read_global_lock() -> dict[str, dict]:
+def read_global_lock() -> dict[str, dict[str, Any]]:
     """Read ~/.agents/.skill-lock.json (global, version 3).
 
     Returns empty dict if the file does not exist or is malformed.
     """
     lock_path = Path.home() / ".agents" / ".skill-lock.json"
     try:
-        data = json.loads(lock_path.read_text(encoding="utf-8"))
-        return dict(data.get("skills", {}))
-    except FileNotFoundError, json.JSONDecodeError, KeyError, TypeError:
+        data = cast(dict[str, Any], json.loads(lock_path.read_text(encoding="utf-8")))
+        return cast(dict[str, dict[str, Any]], data.get("skills", {}))
+    except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError):
         return {}
 
 

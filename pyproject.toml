@@ -24,6 +24,86 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.6.0",
     "pyright>=1.1.409",
     "ruff>=0.15.12",
 ]
+test = [
+    "polyfactory>=3.3.0",
+    "pytest>=9.0.3",
+]
+
+[tool.pyright]
+include = ["src", "tests"]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.14"
+typeCheckingMode = "strict"
+reportMissingImports = true
+useLibraryCodeForTypes = true
+reportInvalidTypeForm = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+# Allow autofix behavior
+fix = true
+unsafe-fixes = false
+
+# Exclude files and directories
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "migrations",
+    ".agents",
+]
+
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle errors
+    "F", # pyflakes
+    "UP", # pyupgrade
+    "B", # flake8-bugbear
+    "SIM", # flake8-simplify
+    "I", # isort
+    "RUF", # Ruff-specific rules
+    "C90", # McCabe complexity
+]
+
+# Ignore specific rules
+ignore = [
+    "E501", # Line too long (handled by formatter)
+]
+
+[tool.flake8]
+ignore = ["E501"]
+max-line-length = 120
+
+[tool.ruff.lint.pydocstyle]
+convention = "google" # Use Google-style docstrings
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

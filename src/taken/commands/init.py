@@ -35,7 +35,7 @@ def _resolve_username() -> str:
             timeout=3,
         )
         git_name = result.stdout.strip() or None
-    except FileNotFoundError, subprocess.TimeoutExpired:
+    except (FileNotFoundError, subprocess.TimeoutExpired):
         git_name = None
 
     # Present options
@@ -46,9 +46,7 @@ def _resolve_username() -> str:
         console.print(f"  [cyan]2[/cyan]  Git config name  → [green]{git_name}[/green]")
         console.print("  [cyan]3[/cyan]  Enter manually")
     else:
-        console.print(
-            "  [cyan]2[/cyan]  Enter manually   [dim](git config name not found)[/dim]"
-        )
+        console.print("  [cyan]2[/cyan]  Enter manually   [dim](git config name not found)[/dim]")
 
     choice = Prompt.ask(
         "\nPick an option",
@@ -97,12 +95,8 @@ def _handle_existing_init() -> bool:
 
     # Give user two options
     console.print("\n[bold]What would you like to reset?[/bold]")
-    console.print(
-        "  [cyan]1[/cyan]  Reset config only  [dim](keeps your skills and registry intact)[/dim]"
-    )
-    console.print(
-        "  [cyan]2[/cyan]  Full wipe          [dim](deletes everything — skills, registry, config)[/dim]"
-    )
+    console.print("  [cyan]1[/cyan]  Reset config only  [dim](keeps your skills and registry intact)[/dim]")
+    console.print("  [cyan]2[/cyan]  Full wipe          [dim](deletes everything — skills, registry, config)[/dim]")
 
     choice = Prompt.ask("\nPick an option", choices=["1", "2"], default="1")
 
@@ -129,8 +123,7 @@ def init() -> None:
     """
     console.print(
         Panel(
-            "[bold white]Welcome to Taken[/bold white]\n"
-            "[dim]A very particular set of skills, managed.[/dim]",
+            "[bold white]Welcome to Taken[/bold white]\n[dim]A very particular set of skills, managed.[/dim]",
             border_style="bright_blue",
             padding=(1, 4),
         )

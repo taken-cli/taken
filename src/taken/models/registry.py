@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -76,7 +75,7 @@ class RegistryEntry(BaseModel):
         default_factory=list,
         description="Which agents this skill was installed for (e.g. ['claude-code', 'cursor']).",
     )
-    notes: Optional[str] = Field(
+    notes: str | None = Field(
         default=None,
         description="Optional user notes about this skill.",
     )
@@ -129,7 +128,7 @@ class Registry(BaseModel):
             return True
         return False
 
-    def get(self, full_name: str) -> Optional[RegistryEntry]:
+    def get(self, full_name: str) -> RegistryEntry | None:
         """Retrieve a skill entry by full name."""
         return self.skills.get(full_name)
 

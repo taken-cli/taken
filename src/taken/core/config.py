@@ -1,10 +1,12 @@
+from datetime import datetime
 from pathlib import Path
+from typing import Any, cast
 
 from ruamel.yaml import YAML
 
 from taken.models.config import TakenConfig
 
-_yaml = YAML()
+_yaml: Any = YAML()
 _yaml.default_flow_style = False
 _yaml.preserve_quotes = True
 
@@ -45,18 +47,16 @@ def read_config(taken_home: Path | None = None) -> TakenConfig:
     path = get_config_path(home)
 
     if not path.exists():
-        raise FileNotFoundError(
-            f"Taken config not found at {path}. Run `taken init` to get started."
-        )
+        raise FileNotFoundError(f"Taken config not found at {path}. Run `taken init` to get started.")
 
     with path.open("r", encoding="utf-8") as f:
-        data = _yaml.load(f)
+        data = cast(dict[str, Any], _yaml.load(f))
 
     return TakenConfig(
         version=data.get("version", "1"),
         username=data["username"],
         taken_home=Path(data.get("taken_home", str(home))),
-        initialized_at=data.get("initialized_at"),
+        initialized_at=data.get("initialized_at") or datetime.now(),
     )
 
 

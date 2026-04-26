@@ -2,15 +2,12 @@
 
 version: '3'
 
-vars:
-  GREETING: Hello, world!
-
 tasks:
-  default:
-    desc: Print a greeting message
+  setup:
+    desc: Set up the development environment
     cmds:
-      - echo "{{.GREETING}}"
-    silent: true
+      - uv sync --dev --group test
+      - pre-commit install
 
   fmt:
     desc: Format code with ruff

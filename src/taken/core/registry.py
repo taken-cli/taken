@@ -1,11 +1,12 @@
 from datetime import datetime
 from pathlib import Path
+from typing import Any, cast
 
 from ruamel.yaml import YAML
 
 from taken.models.registry import Registry, RegistryEntry, SkillSource, VersionPin
 
-_yaml = YAML()
+_yaml: Any = YAML()
 _yaml.default_flow_style = False
 _yaml.preserve_quotes = True
 
@@ -16,7 +17,7 @@ def get_registry_path(taken_home: Path) -> Path:
     return taken_home / REGISTRY_FILE
 
 
-def _serialize_entry(entry: RegistryEntry) -> dict:
+def _serialize_entry(entry: RegistryEntry) -> dict[str, Any]:
     """Convert a RegistryEntry to a YAML-serializable dict."""
     return {
         "namespace": entry.namespace,
@@ -36,7 +37,7 @@ def _serialize_entry(entry: RegistryEntry) -> dict:
     }
 
 
-def _deserialize_entry(data: dict) -> RegistryEntry:
+def _deserialize_entry(data: dict[str, Any]) -> RegistryEntry:
     """Convert a raw YAML dict back into a RegistryEntry."""
 
     def _parse_dt(val: str | None) -> datetime | None:
@@ -70,9 +71,7 @@ def write_registry(registry: Registry, taken_home: Path) -> None:
 
     data = {
         "version": registry.version,
-        "skills": {
-            key: _serialize_entry(entry) for key, entry in registry.skills.items()
-        },
+        "skills": {key: _serialize_entry(entry) for key, entry in registry.skills.items()},
     }
 
     with path.open("w", encoding="utf-8") as f:
@@ -93,15 +92,13 @@ def read_registry(taken_home: Path) -> Registry:
         return Registry()
 
     with path.open("r", encoding="utf-8") as f:
-        data = _yaml.load(f)
+        data = cast(dict[str, Any], _yaml.load(f))
 
     if not data:
         return Registry()
 
-    skills = {
-        key: _deserialize_entry(entry)
-        for key, entry in (data.get("skills") or {}).items()
-    }
+    raw_skills = cast(dict[str, dict[str, Any]], data.get("skills") or {})
+    skills = {key: _deserialize_entry(entry) for key, entry in raw_skills.items()}
 
     return Registry(
         version=data.get("version", "1"),

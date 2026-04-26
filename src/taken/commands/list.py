@@ -34,9 +34,7 @@ def list() -> None:
     registry = read_registry(TAKEN_HOME)
 
     if not registry.skills:
-        console.print(
-            "[yellow]No skills registered yet. Use [bold]taken add[/bold] to create one.[/yellow]"
-        )
+        console.print("[yellow]No skills registered yet. Use [bold]taken add[/bold] to create one.[/yellow]")
         return
 
     table = Table(show_header=True, header_style="bold", box=SIMPLE, padding=(0, 1))

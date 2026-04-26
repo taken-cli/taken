@@ -1,11 +1,12 @@
 from datetime import datetime
 from pathlib import Path
+from typing import Any, cast
 
 from ruamel.yaml import YAML
 
 from taken.models.project import ProjectConfig, ProjectSkillEntry
 
-_yaml = YAML()
+_yaml: Any = YAML()
 _yaml.default_flow_style = False
 _yaml.preserve_quotes = True
 
@@ -23,7 +24,7 @@ def is_project_config_exists(project_root: Path) -> bool:
 def write_project_config(config: ProjectConfig, project_root: Path) -> None:
     path = get_project_config_path(project_root)
 
-    data: dict = {
+    data: dict[str, Any] = {
         "version": config.version,
         "skills_dir": config.skills_dir,
         "skills": {
@@ -46,17 +47,18 @@ def read_project_config(project_root: Path) -> ProjectConfig:
         return ProjectConfig()
 
     with path.open("r", encoding="utf-8") as f:
-        data = _yaml.load(f)
+        data = cast(dict[str, Any], _yaml.load(f))
 
     if not data:
         return ProjectConfig()
 
+    raw_skills = cast(dict[str, dict[str, Any]], data.get("skills") or {})
     skills = {
         key: ProjectSkillEntry(
             copied_at=datetime.fromisoformat(entry["copied_at"]),
             copied_hash=entry.get("copied_hash", ""),
         )
-        for key, entry in (data.get("skills") or {}).items()
+        for key, entry in raw_skills.items()
     }
 
     return ProjectConfig(
