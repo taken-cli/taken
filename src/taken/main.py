@@ -1,5 +1,6 @@
 import typer
 
+from taken.commands.add import add
 from taken.commands.init import init
 
 app = typer.Typer(
@@ -10,6 +11,7 @@ app = typer.Typer(
 )
 
 app.command("init")(init)
+app.command("add")(add)
 
 
 def main() -> None:

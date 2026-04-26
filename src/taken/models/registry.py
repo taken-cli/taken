@@ -81,6 +81,20 @@ class RegistryEntry(BaseModel):
         description="Optional user notes about this skill.",
     )
 
+    # NPX provenance enrichment (populated from global skills-lock)
+    source_url: str | None = Field(
+        default=None,
+        description="Full git URL of the source repo.",
+    )
+    skill_path: str | None = Field(
+        default=None,
+        description="Path within the repo where the skill lives.",
+    )
+    skill_folder_hash: str | None = Field(
+        default=None,
+        description="GitHub tree SHA for change detection on update.",
+    )
+
     @property
     def full_name(self) -> str:
         """Returns the fully qualified skill name: namespace/name."""

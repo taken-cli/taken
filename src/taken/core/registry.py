@@ -30,6 +30,9 @@ def _serialize_entry(entry: RegistryEntry) -> dict:
         "updated_at": entry.updated_at.isoformat() if entry.updated_at else None,
         "agents": entry.agents,
         "notes": entry.notes,
+        "source_url": entry.source_url,
+        "skill_path": entry.skill_path,
+        "skill_folder_hash": entry.skill_folder_hash,
     }
 
 
@@ -51,6 +54,9 @@ def _deserialize_entry(data: dict) -> RegistryEntry:
         updated_at=_parse_dt(data.get("updated_at")),
         agents=data.get("agents", []),
         notes=data.get("notes"),
+        source_url=data.get("source_url"),
+        skill_path=data.get("skill_path"),
+        skill_folder_hash=data.get("skill_folder_hash"),
     )
 
 
