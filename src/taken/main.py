@@ -3,6 +3,7 @@ import typer
 from taken.commands.add import add
 from taken.commands.init import init
 from taken.commands.list import list as list_cmd
+from taken.commands.use import use
 
 app = typer.Typer(
     name="taken",
@@ -14,6 +15,7 @@ app = typer.Typer(
 app.command("init")(init)
 app.command("add")(add)
 app.command("list")(list_cmd)
+app.command("use")(use)
 
 
 def main() -> None:

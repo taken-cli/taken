@@ -105,6 +105,7 @@ def _create_mode(name: str, config: TakenConfig) -> None:
         namespace=config.username,
         name=name,
         source=SkillSource.PERSONAL,
+        version="1",
         created_at=now,
         updated_at=now,
     )
