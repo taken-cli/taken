@@ -29,13 +29,14 @@ dev = [
     "ruff>=0.15.12",
 ]
 test = [
-    "anyio[trio]>=4.0",
+    "anyio>=4.0",
     "polyfactory>=3.3.0",
     "pytest>=9.0.3",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+anyio_mode = "asyncio"
 
 [tool.pyright]
 include = ["src", "tests"]
@@ -92,6 +93,7 @@ select = [
     "I", # isort
     "RUF", # Ruff-specific rules
     "C90", # McCabe complexity
+    "ARG", # unused arguments
 ]
 
 # Ignore specific rules

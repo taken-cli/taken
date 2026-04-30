@@ -12,10 +12,9 @@ from taken.models.config import TakenConfig
 from taken.models.registry import Registry, RegistryEntry
 from tests.fixtures.registry import RegistryEntryFactory
 
-pytestmark = pytest.mark.anyio
 
-
-async def test_init_fresh_creates_config_and_registry(
+@pytest.mark.anyio
+async def test_init__fresh_start__creates_config_and_registry(
     taken_home: Path,
     cli_runner: CliRunner,
 ) -> None:
@@ -30,7 +29,8 @@ async def test_init_fresh_creates_config_and_registry(
     assert (taken_home / "registry.yaml").exists()
 
 
-async def test_init_config_roundtrip(
+@pytest.mark.anyio
+async def test_init__config_roundtrip__values_readable_after_write(
     taken_home: Path,
     cli_runner: CliRunner,
 ) -> None:
@@ -46,7 +46,8 @@ async def test_init_config_roundtrip(
     assert config.taken_home == taken_home
 
 
-async def test_init_registry_is_empty_on_fresh_init(
+@pytest.mark.anyio
+async def test_init__fresh_start__registry_is_empty(
     taken_home: Path,
     cli_runner: CliRunner,
 ) -> None:
@@ -60,7 +61,8 @@ async def test_init_registry_is_empty_on_fresh_init(
     assert registry.skills == {}
 
 
-async def test_init_creates_skills_directory(
+@pytest.mark.anyio
+async def test_init__fresh_start__creates_skills_directory(
     taken_home: Path,
     cli_runner: CliRunner,
 ) -> None:
@@ -74,7 +76,8 @@ async def test_init_creates_skills_directory(
     assert (taken_home / "skills" / username).is_dir()
 
 
-async def test_init_already_initialized_abort(
+@pytest.mark.anyio
+async def test_init__already_initialized_user_aborts__config_unchanged(
     taken_home: Path,
     cli_runner: CliRunner,
     sample_config: TakenConfig,
@@ -92,7 +95,8 @@ async def test_init_already_initialized_abort(
     assert config.username == original_username
 
 
-async def test_init_already_initialized_reset_config_only(
+@pytest.mark.anyio
+async def test_init__already_initialized_reset_config__registry_preserved(
     taken_home: Path,
     cli_runner: CliRunner,
     sample_config: TakenConfig,
@@ -113,7 +117,8 @@ async def test_init_already_initialized_reset_config_only(
     assert sample_registry_entry.full_name in updated_registry.skills
 
 
-async def test_init_already_initialized_full_wipe(
+@pytest.mark.anyio
+async def test_init__already_initialized_full_wipe_confirmed__registry_cleared(
     taken_home: Path,
     cli_runner: CliRunner,
     sample_config: TakenConfig,
@@ -135,7 +140,8 @@ async def test_init_already_initialized_full_wipe(
     assert updated_registry.skills == {}
 
 
-async def test_init_already_initialized_full_wipe_abort_confirm(
+@pytest.mark.anyio
+async def test_init__already_initialized_full_wipe_aborted__config_unchanged(
     taken_home: Path,
     cli_runner: CliRunner,
     sample_config: TakenConfig,
@@ -153,7 +159,8 @@ async def test_init_already_initialized_full_wipe_abort_confirm(
     assert config.username == original_username
 
 
-async def test_init_preserves_registry_when_exists_on_config_reset(
+@pytest.mark.anyio
+async def test_init__config_reset_with_existing_registry__all_entries_preserved(
     taken_home: Path,
     cli_runner: CliRunner,
     sample_config: TakenConfig,
@@ -177,7 +184,8 @@ async def test_init_preserves_registry_when_exists_on_config_reset(
     assert entry2.full_name in updated_registry.skills
 
 
-async def test_init_username_manual_entry(
+@pytest.mark.anyio
+async def test_init__manual_username_entry__config_stores_custom_username(
     taken_home: Path,
     cli_runner: CliRunner,
     monkeypatch: pytest.MonkeyPatch,
@@ -186,7 +194,7 @@ async def test_init_username_manual_entry(
     monkeypatch.setattr("getpass.getuser", lambda: "testuser")
     mock_result: subprocess.CompletedProcess[str] = subprocess.CompletedProcess(args=[], returncode=0, stdout="")
 
-    def _no_git(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+    def _no_git(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
         return mock_result
 
     monkeypatch.setattr("subprocess.run", _no_git)
