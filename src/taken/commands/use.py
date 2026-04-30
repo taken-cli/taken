@@ -11,6 +11,7 @@ from InquirerPy.enum import (
 from rich.panel import Panel
 from rich.prompt import Confirm
 
+from taken.core import paths
 from taken.core.config import is_config_exists
 from taken.core.hashing import compute_skill_hash
 from taken.core.project import read_project_config, write_project_config
@@ -18,8 +19,6 @@ from taken.core.registry import read_registry
 from taken.models.project import ProjectConfig, ProjectSkillEntry
 from taken.models.registry import Registry, RegistryEntry
 from taken.utils.console import console, err_console
-
-TAKEN_HOME = Path.home() / ".taken"
 
 
 def _resolve_selected(
@@ -70,7 +69,7 @@ def use(
     ),
 ) -> None:
     """Copy skill(s) from ~/.taken/ into the current project's .agents/skills/ directory."""
-    if not is_config_exists(TAKEN_HOME):
+    if not is_config_exists(paths.TAKEN_HOME):
         err_console.print(
             Panel(
                 "Taken is not initialized. Run [bold]taken init[/bold] to get started.",
@@ -80,7 +79,7 @@ def use(
         )
         raise typer.Exit(code=1)
 
-    registry = read_registry(TAKEN_HOME)
+    registry = read_registry(paths.TAKEN_HOME)
 
     if not registry.skills:
         err_console.print(
@@ -142,7 +141,7 @@ def _copy_skill(
     project_config: ProjectConfig,
     now: datetime,
 ) -> None:
-    src = TAKEN_HOME / "skills" / entry.namespace / entry.name
+    src = paths.TAKEN_HOME / "skills" / entry.namespace / entry.name
 
     if dst.exists():
         shutil.rmtree(dst)

@@ -29,9 +29,13 @@ dev = [
     "ruff>=0.15.12",
 ]
 test = [
+    "anyio[trio]>=4.0",
     "polyfactory>=3.3.0",
     "pytest>=9.0.3",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.pyright]
 include = ["src", "tests"]
@@ -45,7 +49,7 @@ reportInvalidTypeForm = true
 
 [tool.ruff]
 line-length = 120
-target-version = "py313"
+target-version = "py314"
 
 # Allow autofix behavior
 fix = true

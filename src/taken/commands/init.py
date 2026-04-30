@@ -1,19 +1,17 @@
 import shutil
 import subprocess
 from datetime import datetime
-from pathlib import Path
 
 import typer
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 
+from taken.core import paths
 from taken.core.config import is_config_exists, write_config
 from taken.core.registry import write_registry
 from taken.models.config import TakenConfig
 from taken.models.registry import Registry
 from taken.utils.console import console, err_console
-
-TAKEN_HOME = Path.home() / ".taken"
 
 
 def _resolve_username() -> str:
@@ -35,7 +33,7 @@ def _resolve_username() -> str:
             timeout=3,
         )
         git_name = result.stdout.strip() or None
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except FileNotFoundError, subprocess.TimeoutExpired:
         git_name = None
 
     # Present options
@@ -110,7 +108,7 @@ def _handle_existing_init() -> bool:
             return False
 
         # Full wipe — delete ~/.taken/ entirely
-        shutil.rmtree(TAKEN_HOME)
+        shutil.rmtree(paths.TAKEN_HOME)
         console.print("[dim]Wiped ~/.taken/ — starting fresh.[/dim]")
 
     # Reset config only — just let init proceed and overwrite config.yaml
@@ -130,7 +128,7 @@ def init() -> None:
     )
 
     # Handle existing init
-    if is_config_exists(TAKEN_HOME):
+    if is_config_exists(paths.TAKEN_HOME):
         should_proceed = _handle_existing_init()
         if not should_proceed:
             raise typer.Exit(code=0)
@@ -139,13 +137,13 @@ def init() -> None:
     username = _resolve_username()
 
     # Create directory structure
-    skills_dir = TAKEN_HOME / "skills" / username
+    skills_dir = paths.TAKEN_HOME / "skills" / username
     skills_dir.mkdir(parents=True, exist_ok=True)
 
     # Write config
     config = TakenConfig(
         username=username,
-        taken_home=TAKEN_HOME,
+        taken_home=paths.TAKEN_HOME,
         initialized_at=datetime.now(),
     )
     write_config(config)
@@ -153,8 +151,8 @@ def init() -> None:
     # Write empty registry (only if it doesn't exist — preserve existing on config-only reset)
     from taken.core.registry import is_registry_exists
 
-    if not is_registry_exists(TAKEN_HOME):
-        write_registry(Registry(), TAKEN_HOME)
+    if not is_registry_exists(paths.TAKEN_HOME):
+        write_registry(Registry(), paths.TAKEN_HOME)
 
     # Success
     console.print(

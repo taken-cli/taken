@@ -1,16 +1,13 @@
-from pathlib import Path
-
 import typer
 from rich.box import SIMPLE
 from rich.panel import Panel
 from rich.table import Table
 
+from taken.core import paths
 from taken.core.config import is_config_exists
 from taken.core.registry import read_registry
 from taken.models.registry import SkillSource
 from taken.utils.console import console, err_console
-
-TAKEN_HOME = Path.home() / ".taken"
 
 _SOURCE_STYLE: dict[SkillSource, str] = {
     SkillSource.PERSONAL: "green",
@@ -21,7 +18,7 @@ _SOURCE_STYLE: dict[SkillSource, str] = {
 
 def list() -> None:
     """List all skills in the registry."""
-    if not is_config_exists(TAKEN_HOME):
+    if not is_config_exists(paths.TAKEN_HOME):
         err_console.print(
             Panel(
                 "Taken is not initialized. Run [bold]taken init[/bold] to get started.",
@@ -31,7 +28,7 @@ def list() -> None:
         )
         raise typer.Exit(code=1)
 
-    registry = read_registry(TAKEN_HOME)
+    registry = read_registry(paths.TAKEN_HOME)
 
     if not registry.skills:
         console.print("[yellow]No skills registered yet. Use [bold]taken add[/bold] to create one.[/yellow]")

@@ -5,6 +5,7 @@ from pathlib import Path
 import typer
 from rich.panel import Panel
 
+from taken.core import paths
 from taken.core.config import is_config_exists, read_config
 from taken.core.editor import open_in_editor
 from taken.core.registry import read_registry, write_registry
@@ -18,8 +19,6 @@ from taken.models.config import TakenConfig
 from taken.models.registry import RegistryEntry, SkillSource
 from taken.utils.console import console, err_console
 
-TAKEN_HOME = Path.home() / ".taken"
-
 _VALID_NAME = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]*$")
 
 
@@ -27,7 +26,7 @@ def add(
     skill_or_path: str = typer.Argument(..., help="Skill name to create, or path to existing skill folder to adopt"),
 ) -> None:
     """Add a new personal skill or adopt an existing skill into taken management."""
-    if not is_config_exists(TAKEN_HOME):
+    if not is_config_exists(paths.TAKEN_HOME):
         err_console.print(
             Panel(
                 "Taken is not initialized. Run [bold]taken init[/bold] to get started.",
@@ -37,7 +36,7 @@ def add(
         )
         raise typer.Exit(code=1)
 
-    config = read_config(TAKEN_HOME)
+    config = read_config(paths.TAKEN_HOME)
 
     if is_path_argument(skill_or_path):
         _adopt_mode(skill_or_path, config)
@@ -70,7 +69,7 @@ def _create_mode(name: str, config: TakenConfig) -> None:
         )
         raise typer.Exit(code=1)
 
-    registry = read_registry(TAKEN_HOME)
+    registry = read_registry(paths.TAKEN_HOME)
     full_name = f"{config.username}/{name}"
 
     if registry.exists(full_name):
@@ -84,12 +83,12 @@ def _create_mode(name: str, config: TakenConfig) -> None:
         raise typer.Exit(code=1)
 
     try:
-        skill_md = scaffold_skill(config.username, name, TAKEN_HOME)
+        skill_md = scaffold_skill(config.username, name, paths.TAKEN_HOME)
     except FileExistsError:
         err_console.print(
             Panel(
                 f"Skill directory already exists on disk but is not in the registry.\n"
-                f"Path: [dim]{TAKEN_HOME}/skills/{config.username}/{name}[/dim]\n"
+                f"Path: [dim]{paths.TAKEN_HOME}/skills/{config.username}/{name}[/dim]\n"
                 "Run [bold]taken doctor[/bold] to repair registry drift.",
                 title="[red]Directory Conflict[/red]",
                 border_style="red",
@@ -107,7 +106,7 @@ def _create_mode(name: str, config: TakenConfig) -> None:
         updated_at=now,
     )
     registry.add(entry)
-    write_registry(registry, TAKEN_HOME)
+    write_registry(registry, paths.TAKEN_HOME)
 
     console.print(
         Panel(
@@ -156,7 +155,7 @@ def _adopt_mode(path_str: str, config: TakenConfig) -> None:
         skill_path = None
         skill_folder_hash = None
 
-    registry = read_registry(TAKEN_HOME)
+    registry = read_registry(paths.TAKEN_HOME)
     full_name = f"{namespace}/{name}"
 
     if registry.exists(full_name):
@@ -170,11 +169,11 @@ def _adopt_mode(path_str: str, config: TakenConfig) -> None:
         raise typer.Exit(code=1)
 
     try:
-        adopt_skill(source_dir, namespace, name, TAKEN_HOME)
+        adopt_skill(source_dir, namespace, name, paths.TAKEN_HOME)
     except FileExistsError:
         err_console.print(
             Panel(
-                f"Skill directory already exists at [dim]{TAKEN_HOME}/skills/{namespace}/{name}[/dim]\n"
+                f"Skill directory already exists at [dim]{paths.TAKEN_HOME}/skills/{namespace}/{name}[/dim]\n"
                 "Run [bold]taken doctor[/bold] to repair registry drift.",
                 title="[red]Directory Conflict[/red]",
                 border_style="red",
@@ -197,7 +196,7 @@ def _adopt_mode(path_str: str, config: TakenConfig) -> None:
         skill_folder_hash=skill_folder_hash,
     )
     registry.add(entry)
-    write_registry(registry, TAKEN_HOME)
+    write_registry(registry, paths.TAKEN_HOME)
 
     source_detail = f" ({repo})" if repo else ""
     console.print(

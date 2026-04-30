@@ -42,7 +42,7 @@ def read_project_lock(cwd: Path) -> dict[str, dict[str, Any]]:
     try:
         data = cast(dict[str, Any], json.loads(lock_path.read_text(encoding="utf-8")))
         return cast(dict[str, dict[str, Any]], data.get("skills", {}))
-    except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError):
+    except FileNotFoundError, json.JSONDecodeError, KeyError, TypeError:
         return {}
 
 
@@ -55,7 +55,7 @@ def read_global_lock() -> dict[str, dict[str, Any]]:
     try:
         data = cast(dict[str, Any], json.loads(lock_path.read_text(encoding="utf-8")))
         return cast(dict[str, dict[str, Any]], data.get("skills", {}))
-    except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError):
+    except FileNotFoundError, json.JSONDecodeError, KeyError, TypeError:
         return {}
 
 

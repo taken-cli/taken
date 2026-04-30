@@ -24,3 +24,8 @@ tasks:
       - uv run ruff check .
       - uv run pyright
       - uv run ruff format --check --diff .
+
+  test:
+    desc: Run tests with pytest
+    cmds:
+      - uv run pytest
