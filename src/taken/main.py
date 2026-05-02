@@ -2,6 +2,7 @@ import typer
 
 from taken.commands.add import add
 from taken.commands.init import init
+from taken.commands.install import install
 from taken.commands.list import list as list_cmd
 from taken.commands.remove import remove
 from taken.commands.save import save
@@ -17,6 +18,7 @@ app = typer.Typer(
 
 app.command("init")(init)
 app.command("add")(add)
+app.command("install")(install)
 app.command("list")(list_cmd)
 app.command("use")(use)
 app.command("save")(save)

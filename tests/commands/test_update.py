@@ -6,13 +6,14 @@ import pytest
 from typer.testing import CliRunner
 
 from taken.core.config import write_config
+from taken.core.github import GitHubSkill
 from taken.core.hashing import compute_skill_hash
 from taken.core.project import read_project_config, write_project_config
-from taken.core.registry import write_registry
+from taken.core.registry import read_registry, write_registry
 from taken.main import app
 from taken.models.config import TakenConfig
 from taken.models.project import ProjectConfig, ProjectSkillEntry
-from taken.models.registry import Registry, SkillSource
+from taken.models.registry import Registry, SkillSource, VersionPin
 from tests.fixtures.registry import RegistryEntryFactory
 
 
@@ -482,3 +483,297 @@ async def test_update__registry_skill_dir_missing__exits_with_error(
     # Assert
     assert result.exit_code == 1
     assert "Registry Skill Missing" in result.output
+
+
+# ---------------------------------------------------------------------------
+# GitHub refresh pre-pass (source: taken, pin: floating)
+# ---------------------------------------------------------------------------
+
+_FAKE_SHA_OLD = "oldsha0" * 5 + "oldsha01"
+_FAKE_SHA_NEW = "newsha0" * 5 + "newsha01"
+_OLD_FOLDER_HASH = "oldfolderhash"
+_NEW_FOLDER_HASH = "newfolderhash"
+
+
+def _default_branch_main(owner: str, repo: str) -> str:  # noqa: ARG001
+    return "main"
+
+
+def _new_commit_sha(owner: str, repo: str, ref: str) -> str:  # noqa: ARG001
+    return _FAKE_SHA_NEW
+
+
+def _one_skill_changed(owner: str, repo: str, sha: str) -> list[GitHubSkill]:  # noqa: ARG001
+    return [GitHubSkill(name="my-skill", skill_path="skills/my-skill", skill_folder_hash=_NEW_FOLDER_HASH)]
+
+
+def _one_skill_unchanged(owner: str, repo: str, sha: str) -> list[GitHubSkill]:  # noqa: ARG001
+    return [GitHubSkill(name="my-skill", skill_path="skills/my-skill", skill_folder_hash=_OLD_FOLDER_HASH)]
+
+
+def _default_branch_raises(owner: str, repo: str) -> str:  # noqa: ARG001
+    raise RuntimeError("network error")
+
+
+def _default_branch_not_called(owner: str, repo: str) -> str:  # noqa: ARG001
+    raise AssertionError("get_default_branch should not have been called")
+
+
+def _download_creates_skill_md(
+    owner: str,  # noqa: ARG001
+    repo: str,  # noqa: ARG001
+    skill_path: str,  # noqa: ARG001
+    ref: str,  # noqa: ARG001
+    dest: Path,
+) -> None:
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / "SKILL.md").write_text("# my-skill\nrefreshed from github")
+
+
+@pytest.mark.anyio
+async def test_update__taken_source_floating__refreshed_from_github_when_changed(
+    taken_home: Path,
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    scaffold_registry_skill: Callable[[str, str], Path],
+    scaffold_project_skill: Callable[[str], Path],
+) -> None:
+    # Arrange — taken/floating skill with a different upstream folder hash
+    write_config(sample_config)
+    entry = RegistryEntryFactory.build(
+        namespace="vercel-labs",
+        name="my-skill",
+        source=SkillSource.TAKEN,
+        pin=VersionPin.FLOATING,
+        repo="vercel-labs/agent-skills",
+        version=_FAKE_SHA_OLD,
+        skill_folder_hash=_OLD_FOLDER_HASH,
+    )
+    registry = Registry()
+    registry.add(entry)
+    write_registry(registry, taken_home)
+
+    registry_dir = scaffold_registry_skill("vercel-labs", "my-skill")
+    project_dir = scaffold_project_skill("my-skill")
+    (project_dir / "SKILL.md").write_text((registry_dir / "SKILL.md").read_text())
+    baseline_hash = compute_skill_hash(project_dir)
+
+    pc = ProjectConfig()
+    pc.skills["vercel-labs/my-skill"] = ProjectSkillEntry(copied_at=datetime.now(), copied_hash=baseline_hash)
+    write_project_config(pc, tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    monkeypatch.setattr("taken.commands.update.get_default_branch", _default_branch_main)
+    monkeypatch.setattr("taken.commands.update.get_commit_sha", _new_commit_sha)
+    monkeypatch.setattr("taken.commands.update.discover_skills", _one_skill_changed)
+    monkeypatch.setattr("taken.commands.update.download_skill", _download_creates_skill_md)
+
+    # Act
+    result = cli_runner.invoke(app, ["update", "vercel-labs/my-skill"])
+
+    # Assert — GitHub refresh happened
+    assert result.exit_code == 0
+    assert "Refreshed from GitHub" in result.output
+
+    # Registry updated with new SHA and folder hash
+    updated_registry = read_registry(taken_home)
+    updated_entry = updated_registry.get("vercel-labs/my-skill")
+    assert updated_entry is not None
+    assert updated_entry.version == _FAKE_SHA_NEW
+    assert updated_entry.skill_folder_hash == _NEW_FOLDER_HASH
+    assert updated_entry.updated_at is not None
+
+    # Project also updated (registry changed → local copy updated)
+    assert (project_dir / "SKILL.md").read_text() == "# my-skill\nrefreshed from github"
+
+
+@pytest.mark.anyio
+async def test_update__taken_source_floating__up_to_date_when_hash_matches(
+    taken_home: Path,
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    scaffold_registry_skill: Callable[[str, str], Path],
+    scaffold_project_skill: Callable[[str], Path],
+) -> None:
+    # Arrange — same folder hash upstream: no refresh needed
+    write_config(sample_config)
+    entry = RegistryEntryFactory.build(
+        namespace="vercel-labs",
+        name="my-skill",
+        source=SkillSource.TAKEN,
+        pin=VersionPin.FLOATING,
+        repo="vercel-labs/agent-skills",
+        version=_FAKE_SHA_OLD,
+        skill_folder_hash=_OLD_FOLDER_HASH,
+    )
+    registry = Registry()
+    registry.add(entry)
+    write_registry(registry, taken_home)
+
+    registry_dir = scaffold_registry_skill("vercel-labs", "my-skill")
+    project_dir = scaffold_project_skill("my-skill")
+    (project_dir / "SKILL.md").write_text((registry_dir / "SKILL.md").read_text())
+    baseline_hash = compute_skill_hash(project_dir)
+
+    pc = ProjectConfig()
+    pc.skills["vercel-labs/my-skill"] = ProjectSkillEntry(copied_at=datetime.now(), copied_hash=baseline_hash)
+    write_project_config(pc, tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    monkeypatch.setattr("taken.commands.update.get_default_branch", _default_branch_main)
+    monkeypatch.setattr("taken.commands.update.get_commit_sha", _new_commit_sha)
+    monkeypatch.setattr("taken.commands.update.discover_skills", _one_skill_unchanged)
+
+    # Act
+    result = cli_runner.invoke(app, ["update", "vercel-labs/my-skill"])
+
+    # Assert — no refresh, no registry write
+    assert result.exit_code == 0
+    assert "Refreshed from GitHub" not in result.output
+    assert "Already up to date" in result.output
+
+    # Registry unchanged
+    final_registry = read_registry(taken_home)
+    assert final_registry.get("vercel-labs/my-skill") is not None
+    assert final_registry.skills["vercel-labs/my-skill"].version == _FAKE_SHA_OLD
+
+
+@pytest.mark.anyio
+async def test_update__taken_source_pinned__skips_github_check(
+    taken_home: Path,
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    scaffold_registry_skill: Callable[[str, str], Path],
+    scaffold_project_skill: Callable[[str], Path],
+) -> None:
+    # Arrange — pinned skill: must not call get_default_branch
+    write_config(sample_config)
+    entry = RegistryEntryFactory.build(
+        namespace="vercel-labs",
+        name="my-skill",
+        source=SkillSource.TAKEN,
+        pin=VersionPin.PINNED,
+        repo="vercel-labs/agent-skills",
+        version=_FAKE_SHA_OLD,
+        skill_folder_hash=_OLD_FOLDER_HASH,
+    )
+    registry = Registry()
+    registry.add(entry)
+    write_registry(registry, taken_home)
+
+    registry_dir = scaffold_registry_skill("vercel-labs", "my-skill")
+    project_dir = scaffold_project_skill("my-skill")
+    (project_dir / "SKILL.md").write_text((registry_dir / "SKILL.md").read_text())
+    baseline_hash = compute_skill_hash(project_dir)
+
+    pc = ProjectConfig()
+    pc.skills["vercel-labs/my-skill"] = ProjectSkillEntry(copied_at=datetime.now(), copied_hash=baseline_hash)
+    write_project_config(pc, tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    # If get_default_branch is called, it raises — test fails
+    monkeypatch.setattr("taken.commands.update.get_default_branch", _default_branch_not_called)
+
+    # Act
+    result = cli_runner.invoke(app, ["update", "vercel-labs/my-skill"])
+
+    # Assert — no AssertionError, normal local behavior
+    assert result.exit_code == 0
+    assert "Refreshed from GitHub" not in result.output
+
+
+@pytest.mark.anyio
+async def test_update__taken_source_floating__uses_local_when_github_fails(
+    taken_home: Path,
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    scaffold_registry_skill: Callable[[str, str], Path],
+    scaffold_project_skill: Callable[[str], Path],
+) -> None:
+    # Arrange — GitHub call fails; update should still work locally
+    write_config(sample_config)
+    entry = RegistryEntryFactory.build(
+        namespace="vercel-labs",
+        name="my-skill",
+        source=SkillSource.TAKEN,
+        pin=VersionPin.FLOATING,
+        repo="vercel-labs/agent-skills",
+        version=_FAKE_SHA_OLD,
+        skill_folder_hash=_OLD_FOLDER_HASH,
+    )
+    registry = Registry()
+    registry.add(entry)
+    write_registry(registry, taken_home)
+
+    registry_dir = scaffold_registry_skill("vercel-labs", "my-skill")
+    project_dir = scaffold_project_skill("my-skill")
+    (project_dir / "SKILL.md").write_text((registry_dir / "SKILL.md").read_text())
+    baseline_hash = compute_skill_hash(project_dir)
+
+    pc = ProjectConfig()
+    pc.skills["vercel-labs/my-skill"] = ProjectSkillEntry(copied_at=datetime.now(), copied_hash=baseline_hash)
+    write_project_config(pc, tmp_path)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("taken.commands.update.get_default_branch", _default_branch_raises)
+
+    # Act
+    result = cli_runner.invoke(app, ["update", "vercel-labs/my-skill"])
+
+    # Assert — warning printed, local copy still up to date
+    assert result.exit_code == 0
+    assert "Could not reach GitHub" in result.output
+    assert "Refreshed from GitHub" not in result.output
+
+
+@pytest.mark.anyio
+async def test_update__taken_source_no_skill_folder_hash__skips_github(
+    taken_home: Path,
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    scaffold_registry_skill: Callable[[str, str], Path],
+    scaffold_project_skill: Callable[[str], Path],
+) -> None:
+    # Arrange — taken/floating but no skill_folder_hash baseline: skip GitHub check
+    write_config(sample_config)
+    entry = RegistryEntryFactory.build(
+        namespace="vercel-labs",
+        name="my-skill",
+        source=SkillSource.TAKEN,
+        pin=VersionPin.FLOATING,
+        repo="vercel-labs/agent-skills",
+        version=_FAKE_SHA_OLD,
+        skill_folder_hash=None,
+    )
+    registry = Registry()
+    registry.add(entry)
+    write_registry(registry, taken_home)
+
+    registry_dir = scaffold_registry_skill("vercel-labs", "my-skill")
+    project_dir = scaffold_project_skill("my-skill")
+    (project_dir / "SKILL.md").write_text((registry_dir / "SKILL.md").read_text())
+    baseline_hash = compute_skill_hash(project_dir)
+
+    pc = ProjectConfig()
+    pc.skills["vercel-labs/my-skill"] = ProjectSkillEntry(copied_at=datetime.now(), copied_hash=baseline_hash)
+    write_project_config(pc, tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    # get_default_branch must NOT be called
+    monkeypatch.setattr("taken.commands.update.get_default_branch", _default_branch_not_called)
+
+    # Act
+    result = cli_runner.invoke(app, ["update", "vercel-labs/my-skill"])
+
+    # Assert — no AssertionError, proceeds with local-only check
+    assert result.exit_code == 0
+    assert "Refreshed from GitHub" not in result.output

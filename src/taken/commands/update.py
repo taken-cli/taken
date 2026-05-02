@@ -1,5 +1,7 @@
 import shutil
+from datetime import datetime
 from pathlib import Path
+from typing import NamedTuple
 
 import typer
 from InquirerPy import inquirer
@@ -12,10 +14,71 @@ from rich.prompt import Confirm
 
 from taken.core import paths
 from taken.core.config import is_config_exists
+from taken.core.github import discover_skills, download_skill, get_commit_sha, get_default_branch
 from taken.core.hashing import compute_skill_hash
 from taken.core.project import is_project_config_exists, read_project_config, write_project_config
+from taken.core.registry import read_registry, write_registry
 from taken.models.project import ProjectConfig, ProjectSkillEntry
+from taken.models.registry import Registry, RegistryEntry, SkillSource, VersionPin
 from taken.utils.console import console, err_console
+
+
+class _GitHubRefreshResult(NamedTuple):
+    refreshed_lines: list[str]
+    is_registry_modified: bool
+
+
+def _try_refresh_from_github(
+    entry: RegistryEntry,
+    registry: Registry,
+    refreshed: list[str],
+) -> bool:
+    """Check GitHub for upstream changes to a taken-source skill and re-download if changed.
+
+    Returns True if the registry skill was re-downloaded, False otherwise.
+    Non-fatal: all errors are printed as warnings and return False.
+    """
+    if entry.repo is None:
+        return False
+    parts = entry.repo.split("/", 1)
+    owner, repo_name = parts[0], parts[1]
+
+    if entry.skill_folder_hash is None:
+        return False
+
+    try:
+        with console.status(f"[dim]Checking GitHub for {entry.full_name}…[/dim]"):
+            branch = get_default_branch(owner, repo_name)
+            new_sha = get_commit_sha(owner, repo_name, branch)
+            skills = discover_skills(owner, repo_name, new_sha)
+    except Exception:
+        console.print(f"[dim]⚠ Could not reach GitHub for {entry.full_name} — using local copy[/dim]")
+        return False
+
+    skill = next((s for s in skills if s.name == entry.name), None)
+    if skill is None:
+        console.print(f"[dim]⚠ {entry.full_name} not found in upstream repo — using local copy[/dim]")
+        return False
+
+    if skill.skill_folder_hash == entry.skill_folder_hash:
+        return False
+
+    skill_dir = paths.TAKEN_HOME / "skills" / entry.namespace / entry.name
+    try:
+        with console.status(f"[dim]Downloading updated {entry.full_name}…[/dim]"):
+            if skill_dir.exists():
+                shutil.rmtree(skill_dir)
+            download_skill(owner, repo_name, skill.skill_path, new_sha, skill_dir)
+    except Exception as e:
+        err_console.print(Panel(str(e), title=f"[red]Failed to refresh {entry.full_name}[/red]", border_style="red"))
+        return False
+
+    old_short = entry.version[:8] if entry.version else "?"
+    registry.skills[entry.full_name].version = new_sha
+    registry.skills[entry.full_name].skill_folder_hash = skill.skill_folder_hash
+    registry.skills[entry.full_name].updated_at = datetime.now()
+    refreshed.append(f"[blue]↑[/blue] [bold]{entry.full_name}[/bold] {old_short} → {new_sha[:8]}")
+    return True
 
 
 def _resolve_selected(
@@ -113,6 +176,29 @@ def _process_skill(
     updated.append(f"[green]✓[/green] [bold]{full_name}[/bold] → {project_config.skills_dir}/{name}/")
 
 
+def _run_github_refresh_pass(selected: list[str]) -> _GitHubRefreshResult:
+    """Check GitHub for upstream changes on all floating taken-source skills in selected."""
+    registry = read_registry(paths.TAKEN_HOME)
+    refreshed_from_github: list[str] = []
+    is_registry_modified = False
+
+    for full_name in selected:
+        entry = registry.get(full_name)
+        if (
+            entry is not None
+            and entry.source == SkillSource.TAKEN
+            and entry.pin == VersionPin.FLOATING
+            and entry.repo is not None
+        ):
+            modified = _try_refresh_from_github(entry, registry, refreshed_from_github)
+            is_registry_modified = is_registry_modified or modified
+
+    if is_registry_modified:
+        write_registry(registry, paths.TAKEN_HOME)
+
+    return _GitHubRefreshResult(refreshed_lines=refreshed_from_github, is_registry_modified=is_registry_modified)
+
+
 def update(
     namespace_skill: str | None = typer.Argument(
         None,
@@ -154,6 +240,8 @@ def update(
         raise typer.Exit(code=1)
 
     selected = _resolve_selected(namespace_skill, project_config)
+    refresh_result = _run_github_refresh_pass(selected)
+    refreshed_from_github = refresh_result.refreshed_lines
 
     updated: list[str] = []
     skipped: list[str] = []
@@ -185,3 +273,14 @@ def update(
 
     if skipped:
         console.print(f"[dim]Skipped: {', '.join(skipped)}[/dim]")
+
+    if refreshed_from_github:
+        lines = "\n".join(refreshed_from_github)
+        console.print(
+            Panel(
+                lines,
+                title="[blue]Refreshed from GitHub[/blue]",
+                border_style="blue",
+                padding=(1, 2),
+            )
+        )
