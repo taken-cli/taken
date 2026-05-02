@@ -1,12 +1,50 @@
 import io
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+_SEGMENT = re.compile(r"^[a-zA-Z0-9_.-]+$")
+_NPX_PREFIX = re.compile(r"^\s*npx\s+skills\s+add\s+", re.IGNORECASE)
+_GITHUB_PREFIX = re.compile(r"^https?://github\.com/", re.IGNORECASE)
+_TREE_SUFFIX = re.compile(r"/tree/[^/]+.*$")
+
+
+def normalize_source(raw: str) -> str:
+    """Strip npx prefix, GitHub URL prefix, .git suffix, and /tree/... suffix."""
+    s = raw.strip()
+    s = _NPX_PREFIX.sub("", s).strip()
+    s = _GITHUB_PREFIX.sub("", s).strip()
+    s = s.removesuffix(".git")
+    s = _TREE_SUFFIX.sub("", s).strip()
+    if not s:
+        raise ValueError(f"Could not parse a repo from: {raw!r}")
+    return s
+
+
+def parse_source(arg: str) -> tuple[str, str, str | None]:
+    """Return (owner, repo, skill_filter) from 'owner/repo' or 'owner/repo/skill'."""
+    parts = arg.strip("/").split("/")
+    if len(parts) < 2:
+        raise ValueError(
+            f"Expected owner/repo or owner/repo/skill, got: {arg!r}\nExample: [bold]vercel-labs/agent-skills[/bold]"
+        )
+    owner, repo = parts[0], parts[1]
+    skill_filter = parts[2] if len(parts) >= 3 else None
+
+    for seg in filter(None, [owner, repo, skill_filter]):
+        if not _SEGMENT.match(seg):
+            raise ValueError(
+                f"[bold]{seg!r}[/bold] is not a valid name segment.\n"
+                "Use letters, numbers, hyphens, underscores, and dots only."
+            )
+
+    return owner, repo, skill_filter
 
 
 @dataclass

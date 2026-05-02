@@ -5,7 +5,7 @@ paths:
 
 # Testing Patterns
 
-Integration tests only — no unit tests. Every test invokes the real CLI via `CliRunner` and asserts on filesystem state, registry state, and exit codes. No mocking of business logic.
+Integration tests are preferred — invoke the real CLI via `CliRunner` and assert on filesystem state, registry state, and exit codes. Unit tests are acceptable for pure functions (parsers, normalizers, formatters) where a parameterized test gives better coverage than an equivalent integration test would.
 
 ## File layout
 
@@ -18,15 +18,20 @@ tests/
   commands/
     conftest.py            # autouse patch_taken_home
     test_<command>.py      # one file per CLI command
+  core/
+    test_<module>.py       # unit tests for pure functions in core/
 ```
 
 ## Per-function marker
 
-Use `@pytest.mark.anyio` on each test function. Do not use the module-level `pytestmark` variable.
+Use `@pytest.mark.anyio` on each async test function. Do not use the module-level `pytestmark` variable. Sync tests (e.g. unit tests for pure functions) do not need the marker.
 
 ```python
 @pytest.mark.anyio
 async def test_something(...) -> None:
+    ...
+
+def test_pure_function(...) -> None:  # no marker needed
     ...
 ```
 
@@ -35,7 +40,7 @@ async def test_something(...) -> None:
 Follow the three-part double-underscore pattern:
 
 ```
-test_<command>__<what_is_being_tested>__<expected_result>
+test_<subject>__<what_is_being_tested>__<expected_result>
 ```
 
 Examples:
@@ -44,15 +49,16 @@ Examples:
 async def test_add__create_valid_skill__skill_scaffolded_and_registered(...)
 async def test_use__local_changes_user_declines__skill_skipped(...)
 async def test_list__not_initialized__exits_with_error(...)
+def test_normalize_and_parse__npx_prefix__stripped_correctly(...)
 ```
 
-- `<command>` — the CLI command under test (`init`, `add`, `list`, `use`)
+- `<subject>` — the CLI command (`init`, `add`, `list`) or the function/module under test (`normalize_and_parse`, `discover_skills`)
 - `<what_is_being_tested>` — the scenario or condition (snake_case, be specific)
 - `<expected_result>` — the observable outcome (snake_case, what you assert)
 
 ## Test function signature
 
-All tests are `async def`. Fixtures are declared as parameters:
+Integration tests are `async def`; unit tests for pure functions are plain `def`. Fixtures are declared as parameters:
 
 ```python
 async def test_something(
