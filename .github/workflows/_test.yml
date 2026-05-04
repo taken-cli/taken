@@ -30,3 +30,10 @@ jobs:
 
       - name: Test
         run: task test
+
+  test-success:
+    name: Tests passed
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - run: echo "All tests passed"
