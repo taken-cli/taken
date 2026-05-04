@@ -33,7 +33,7 @@ def _resolve_username() -> str:
             timeout=3,
         )
         git_name = result.stdout.strip() or None
-    except FileNotFoundError, subprocess.TimeoutExpired:
+    except (FileNotFoundError, subprocess.TimeoutExpired):
         git_name = None
 
     # Present options
