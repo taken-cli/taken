@@ -1,5 +1,5 @@
 [project]
-name = "taken"
+name = "taken-cli"
 version = "0.1.0rc1"
 description = "Personal dotfile-style CLI for managing AI agent skills"
 readme = "README.md"
@@ -22,6 +22,9 @@ taken = "taken.main:main"
 [build-system]
 requires = ["uv_build>=0.10.9,<0.11.0"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "taken"
 
 [dependency-groups]
 dev = [
