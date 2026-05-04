@@ -1,0 +1,14 @@
+name: PR
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    uses: ./.github/workflows/_lint.yml
+
+  test:
+    uses: ./.github/workflows/_test.yml
+
+  build:
+    uses: ./.github/workflows/_build.yml
