@@ -1,12 +1,13 @@
 [project]
 name = "taken"
 version = "0.1.0"
-description = "Add your description here"
+description = "Personal dotfile-style CLI for managing AI agent skills"
 readme = "README.md"
+license = { text = "MIT" }
 authors = [
-    { name = "Pradyoth", email = "sppradyoth@outlook.com" }
+    { name = "Pradyoth", email = "pradyoth.dev@gmail.com" }
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 dependencies = [
     "inquirerpy>=0.3.4",
     "pydantic>=2.13.3",

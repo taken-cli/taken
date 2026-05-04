@@ -12,3 +12,6 @@ wheels/
 # Idea project files
 .idea/
 
+# Local-only files
+*.local.*
+
