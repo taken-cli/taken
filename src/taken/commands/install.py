@@ -8,6 +8,7 @@ from rich.panel import Panel
 
 from taken.core import paths
 from taken.core.config import is_config_exists
+from taken.core.git import auto_commit_and_push
 from taken.core.github import (
     GitHubSkill,
     discover_skills,
@@ -221,4 +222,6 @@ def install(
     skills = _filter_skills(skills, skill_filter, owner, repo)
     selected = skills if skill_filter else _select_skills(skills)
     installed, skipped = _install_skills(selected, owner, repo, sha, pin)
+    if installed:
+        auto_commit_and_push(paths.TAKEN_HOME, f"install: {' '.join(installed)}")
     _print_install_results(installed, skipped, owner, repo, sha, pin)

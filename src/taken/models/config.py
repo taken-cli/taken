@@ -4,6 +4,11 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 
+class GitConfig(BaseModel):
+    auto_commit: bool = True
+    auto_push: bool = True
+
+
 class TakenConfig(BaseModel):
     """
     Represents the user configuration stored at ~/.taken/config.yaml.
@@ -27,6 +32,10 @@ class TakenConfig(BaseModel):
     version: str = Field(
         default="1",
         description="Config schema version. Used for future migrations.",
+    )
+    git: GitConfig = Field(
+        default_factory=GitConfig,
+        description="Git version control settings for ~/.taken/.",
     )
 
     model_config = {"arbitrary_types_allowed": True}

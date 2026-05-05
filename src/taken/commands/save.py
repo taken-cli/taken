@@ -12,6 +12,7 @@ from rich.panel import Panel
 
 from taken.core import paths
 from taken.core.config import is_config_exists
+from taken.core.git import auto_commit_and_push
 from taken.core.hashing import compute_skill_hash
 from taken.core.project import is_project_config_exists, read_project_config, write_project_config
 from taken.core.registry import read_registry, write_registry
@@ -63,6 +64,7 @@ def _process_skill(
     registry: Registry,
     now: datetime,
     saved: list[str],
+    saved_names: list[str],
     no_changes: list[str],
 ) -> None:
     namespace, name = full_name.split("/", 1)
@@ -91,6 +93,7 @@ def _process_skill(
         registry_entry.updated_at = now
 
     saved.append(f"[green]✓[/green] [bold]{full_name}[/bold] → ~/.taken/skills/{namespace}/{name}/")
+    saved_names.append(full_name)
 
 
 def save(
@@ -138,10 +141,11 @@ def save(
 
     now = datetime.now()
     saved: list[str] = []
+    saved_names: list[str] = []
     no_changes: list[str] = []
 
     for full_name in selected:
-        _process_skill(full_name, project_config, registry, now, saved, no_changes)
+        _process_skill(full_name, project_config, registry, now, saved, saved_names, no_changes)
 
     if not saved and not no_changes:
         return
@@ -149,6 +153,7 @@ def save(
     if saved:
         write_project_config(project_config, Path.cwd())
         write_registry(registry, paths.TAKEN_HOME)
+        auto_commit_and_push(paths.TAKEN_HOME, f"save: {' '.join(saved_names)}")
 
         lines = "\n".join(saved) + "\n\n[dim]Registry and .taken.yaml updated[/dim]"
         console.print(

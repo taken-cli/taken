@@ -8,6 +8,7 @@ from rich.prompt import Confirm, Prompt
 
 from taken.core import paths
 from taken.core.config import is_config_exists, write_config
+from taken.core.git import init_repo
 from taken.core.registry import write_registry
 from taken.models.config import TakenConfig
 from taken.models.registry import Registry
@@ -153,6 +154,9 @@ def init() -> None:
 
     if not is_registry_exists(paths.TAKEN_HOME):
         write_registry(Registry(), paths.TAKEN_HOME)
+
+    # Initialize git repo and make initial commit
+    init_repo(paths.TAKEN_HOME)
 
     # Success
     console.print(

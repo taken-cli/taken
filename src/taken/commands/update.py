@@ -14,6 +14,7 @@ from rich.prompt import Confirm
 
 from taken.core import paths
 from taken.core.config import is_config_exists
+from taken.core.git import auto_commit_and_push
 from taken.core.github import discover_skills, download_skill, get_commit_sha, get_default_branch
 from taken.core.hashing import compute_skill_hash
 from taken.core.project import is_project_config_exists, read_project_config, write_project_config
@@ -25,6 +26,7 @@ from taken.utils.console import console, err_console
 
 class _GitHubRefreshResult(NamedTuple):
     refreshed_lines: list[str]
+    refreshed_names: list[str]
     is_registry_modified: bool
 
 
@@ -32,6 +34,7 @@ def _try_refresh_from_github(
     entry: RegistryEntry,
     registry: Registry,
     refreshed: list[str],
+    refreshed_names: list[str],
 ) -> bool:
     """Check GitHub for upstream changes to a taken-source skill and re-download if changed.
 
@@ -78,6 +81,7 @@ def _try_refresh_from_github(
     registry.skills[entry.full_name].skill_folder_hash = skill.skill_folder_hash
     registry.skills[entry.full_name].updated_at = datetime.now()
     refreshed.append(f"[blue]↑[/blue] [bold]{entry.full_name}[/bold] {old_short} → {new_sha[:8]}")
+    refreshed_names.append(entry.full_name)
     return True
 
 
@@ -180,6 +184,7 @@ def _run_github_refresh_pass(selected: list[str]) -> _GitHubRefreshResult:
     """Check GitHub for upstream changes on all floating taken-source skills in selected."""
     registry = read_registry(paths.TAKEN_HOME)
     refreshed_from_github: list[str] = []
+    refreshed_names: list[str] = []
     is_registry_modified = False
 
     for full_name in selected:
@@ -190,13 +195,18 @@ def _run_github_refresh_pass(selected: list[str]) -> _GitHubRefreshResult:
             and entry.pin == VersionPin.FLOATING
             and entry.repo is not None
         ):
-            modified = _try_refresh_from_github(entry, registry, refreshed_from_github)
+            modified = _try_refresh_from_github(entry, registry, refreshed_from_github, refreshed_names)
             is_registry_modified = is_registry_modified or modified
 
     if is_registry_modified:
         write_registry(registry, paths.TAKEN_HOME)
+        auto_commit_and_push(paths.TAKEN_HOME, f"update: {' '.join(refreshed_names)}")
 
-    return _GitHubRefreshResult(refreshed_lines=refreshed_from_github, is_registry_modified=is_registry_modified)
+    return _GitHubRefreshResult(
+        refreshed_lines=refreshed_from_github,
+        refreshed_names=refreshed_names,
+        is_registry_modified=is_registry_modified,
+    )
 
 
 def update(

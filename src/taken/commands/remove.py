@@ -11,6 +11,7 @@ from rich.prompt import Confirm
 
 from taken.core import paths
 from taken.core.config import is_config_exists
+from taken.core.git import auto_commit_and_push
 from taken.core.registry import read_registry, write_registry
 from taken.models.registry import Registry, RegistryEntry
 from taken.utils.console import console, err_console
@@ -89,6 +90,7 @@ def remove(
     selected = _resolve_selected(namespace_skill, registry)
 
     removed: list[str] = []
+    removed_names: list[str] = []
     skipped: list[str] = []
 
     for entry in selected:
@@ -102,9 +104,11 @@ def remove(
 
         registry.remove(entry.full_name)
         removed.append(f"[red]✕[/red] [bold]{entry.full_name}[/bold]")
+        removed_names.append(entry.full_name)
 
     if removed:
         write_registry(registry, paths.TAKEN_HOME)
+        auto_commit_and_push(paths.TAKEN_HOME, f"remove: {' '.join(removed_names)}")
 
         lines = "\n".join(removed)
         console.print(

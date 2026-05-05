@@ -8,6 +8,7 @@ from rich.panel import Panel
 from taken.core import paths
 from taken.core.config import is_config_exists, read_config
 from taken.core.editor import open_in_editor
+from taken.core.git import auto_commit_and_push
 from taken.core.registry import read_registry, write_registry
 from taken.core.skills import (
     adopt_skill,
@@ -107,6 +108,7 @@ def _create_mode(name: str, config: TakenConfig) -> None:
     )
     registry.add(entry)
     write_registry(registry, paths.TAKEN_HOME)
+    auto_commit_and_push(paths.TAKEN_HOME, f"add: {full_name}")
 
     console.print(
         Panel(
@@ -197,6 +199,7 @@ def _adopt_mode(path_str: str, config: TakenConfig) -> None:
     )
     registry.add(entry)
     write_registry(registry, paths.TAKEN_HOME)
+    auto_commit_and_push(paths.TAKEN_HOME, f"add: {full_name}")
 
     source_detail = f" ({repo})" if repo else ""
     console.print(
