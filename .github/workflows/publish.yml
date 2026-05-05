@@ -6,7 +6,25 @@ on:
       - "v*"
 
 jobs:
+  check-ci:
+    name: Verify CI passed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check CI workflow passed on tagged commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          conclusion=$(gh run list \
+            --repo ${{ github.repository }} \
+            --workflow ci.yml \
+            --commit ${{ github.sha }} \
+            --json conclusion \
+            --jq '.[0].conclusion')
+          echo "CI conclusion: $conclusion"
+          [ "$conclusion" = "success" ] || { echo "CI did not pass on this commit"; exit 1; }
+
   build:
+    needs: check-ci
     uses: ./.github/workflows/_build.yml
 
   publish:
