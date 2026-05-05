@@ -16,6 +16,11 @@ dependencies = [
     "typer>=0.24.2",
 ]
 
+[project.urls]
+Homepage = "https://github.com/taken-cli/taken"
+Repository = "https://github.com/taken-cli/taken"
+Issues = "https://github.com/taken-cli/taken/issues"
+
 [project.scripts]
 taken = "taken.main:main"
 
