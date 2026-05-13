@@ -16,13 +16,13 @@ tasks:
       - uv run ruff format .
 
   fmt:check:
-    desc: Check formatting and types (ruff + pyright)
+    desc: Check formatting and types (ruff + pyrefly)
     aliases:
       - check
       - fmt-check
     cmds:
       - uv run ruff check .
-      - uv run pyright
+      - uv run pyrefly check
       - uv run ruff format --check --diff .
 
   test:

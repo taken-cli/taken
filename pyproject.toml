@@ -21,6 +21,10 @@ Homepage = "https://github.com/taken-cli/taken"
 Repository = "https://github.com/taken-cli/taken"
 Issues = "https://github.com/taken-cli/taken/issues"
 
+[tool.pyrefly.errors]
+missing-import = "error"
+invalid-annotation = "error"
+
 [project.scripts]
 taken = "taken.main:main"
 
@@ -34,7 +38,7 @@ module-name = "taken"
 [dependency-groups]
 dev = [
     "pre-commit>=4.6.0",
-    "pyright>=1.1.409",
+    "pyrefly>=1.0.0",
     "ruff>=0.15.12",
 ]
 test = [
@@ -46,16 +50,6 @@ test = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 anyio_mode = "asyncio"
-
-[tool.pyright]
-include = ["src", "tests"]
-venvPath = "."
-venv = ".venv"
-pythonVersion = "3.14"
-typeCheckingMode = "strict"
-reportMissingImports = true
-useLibraryCodeForTypes = true
-reportInvalidTypeForm = true
 
 [tool.ruff]
 line-length = 120
@@ -122,3 +116,13 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+
+[tool.pyrefly]
+project-includes = [
+    "src",
+    "tests",
+]
+search-path = ["."]
+python-version = "3.14.0"
+infer-with-first-use = false
+preset = "strict"
