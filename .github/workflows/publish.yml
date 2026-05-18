@@ -10,18 +10,19 @@ jobs:
     name: Verify CI passed
     runs-on: ubuntu-latest
     steps:
-      - name: Check CI workflow passed on tagged commit
+      - name: Wait for CI to pass on tagged commit
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          conclusion=$(gh run list \
+          run_id=$(gh run list \
             --repo ${{ github.repository }} \
             --workflow ci.yml \
             --commit ${{ github.sha }} \
-            --json conclusion \
-            --jq '.[0].conclusion')
-          echo "CI conclusion: $conclusion"
-          [ "$conclusion" = "success" ] || { echo "CI did not pass on this commit"; exit 1; }
+            --json databaseId \
+            --jq '.[0].databaseId')
+          [ -z "$run_id" ] || [ "$run_id" = "null" ] && { echo "No CI run found for this commit"; exit 1; }
+          echo "Waiting for CI run $run_id..."
+          gh run watch "$run_id" --exit-status
 
   build:
     needs: check-ci
@@ -47,3 +48,14 @@ jobs:
 
       - name: Publish
         run: uv publish
+
+  release:
+    name: Create GitHub Release
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
