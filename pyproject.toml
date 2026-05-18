@@ -1,6 +1,6 @@
 [project]
 name = "taken-cli"
-version = "0.1.0rc1"
+version = "0.1.0"
 description = "Personal dotfile-style CLI for managing AI agent skills"
 readme = "README.md"
 license = { text = "MIT" }
