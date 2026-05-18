@@ -22,7 +22,7 @@ jobs:
             --jq '.[0].databaseId')
           [ -z "$run_id" ] || [ "$run_id" = "null" ] && { echo "No CI run found for this commit"; exit 1; }
           echo "Waiting for CI run $run_id..."
-          gh run watch "$run_id" --exit-status
+          gh run watch "$run_id" --repo ${{ github.repository }} --exit-status
 
   build:
     needs: check-ci
