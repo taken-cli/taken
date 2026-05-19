@@ -11,11 +11,11 @@ Fully compatible with the [skills.sh](https://skills.sh) ecosystem (Claude Code,
 ## Install
 
 ```bash
-uv tool install taken
+uv tool install taken-cli
 ```
 
 ```bash
-pip install taken
+pipx install taken-cli
 ```
 
 ---
