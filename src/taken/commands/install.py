@@ -88,7 +88,7 @@ def _print_install_results(
 
 def _fetch_github_skills(owner: str, repo: str, ref: str) -> tuple[str, list[GitHubSkill]]:
     """Resolve ref to a commit SHA and discover skills in the repo."""
-    resolved_ref = ref if ref else get_default_branch(owner, repo)
+    resolved_ref = ref or get_default_branch(owner, repo)
     sha = get_commit_sha(owner, repo, resolved_ref)
     skills = discover_skills(owner, repo, sha)
     return sha, skills

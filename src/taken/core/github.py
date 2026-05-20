@@ -66,7 +66,7 @@ def _api_headers() -> dict[str, str]:
     return headers
 
 
-def _api_get(url: str) -> Any:
+def _api_get(url: str) -> dict[str, Any]:
     req = urllib.request.Request(url, headers=_api_headers())
     try:
         with urllib.request.urlopen(req) as resp:

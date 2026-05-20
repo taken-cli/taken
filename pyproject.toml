@@ -89,21 +89,30 @@ exclude = [
 
 [tool.ruff.lint]
 select = [
-    "E", # pycodestyle errors
-    "F", # pyflakes
-    "UP", # pyupgrade
-    "B", # flake8-bugbear
-    "SIM", # flake8-simplify
-    "I", # isort
-    "RUF", # Ruff-specific rules
-    "C90", # McCabe complexity
-    "ARG", # unused arguments
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "I",    # isort
+    "RUF",  # Ruff-specific rules
+    "C90",  # McCabe complexity
+    "ARG",  # unused arguments
+    "ANN",  # type annotations
+    "N",    # PEP8 naming
+    "PERF", # performance anti-patterns
+    "FURB", # modernization
+    "SLF",  # private member access
 ]
 
 # Ignore specific rules
 ignore = [
-    "E501", # Line too long (handled by formatter)
+    "E501",   # Line too long (handled by formatter)
+    "ANN401", # typing.Any allowed where semantically correct
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN"]
 
 [tool.flake8]
 ignore = ["E501"]
@@ -124,6 +133,6 @@ project-includes = [
     "tests",
 ]
 search-path = ["."]
-python-version = "3.14.0"
+python-version = "3.11"
 infer-with-first-use = false
 preset = "strict"
