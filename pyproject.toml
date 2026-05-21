@@ -17,7 +17,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/taken-cli/taken"
+Homepage = "https://taken-cli.github.io/taken/"
+Documentation = "https://taken-cli.github.io/taken/"
 Repository = "https://github.com/taken-cli/taken"
 Issues = "https://github.com/taken-cli/taken/issues"
 Changelog = "https://github.com/taken-cli/taken/releases"

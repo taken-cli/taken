@@ -29,3 +29,13 @@ tasks:
     desc: Run tests with pytest
     cmds:
       - uv run pytest
+
+  docs:serve:
+    desc: Serve docs locally with live reload
+    cmds:
+      - uv run --group docs mkdocs serve
+
+  docs:build:
+    desc: Build docs to site/
+    cmds:
+      - uv run --group docs mkdocs build

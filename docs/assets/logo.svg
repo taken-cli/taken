@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background rounded square -->
+  <rect x="5" y="5" width="90" height="90" rx="18" fill="#1a1a1a"/>
+  <!-- > caret -->
+  <polyline points="22,34 46,50 22,66" fill="none" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- _ underscore -->
+  <line x1="52" y1="68" x2="78" y2="68" stroke="white" stroke-width="8" stroke-linecap="round"/>
+</svg>
