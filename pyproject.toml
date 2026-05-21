@@ -37,6 +37,9 @@ build-backend = "uv_build"
 module-name = "taken"
 
 [dependency-groups]
+docs = [
+    "mkdocs-material>=9.0",
+]
 dev = [
     "pre-commit>=4.6.0",
     "pyrefly>=1.0.0",

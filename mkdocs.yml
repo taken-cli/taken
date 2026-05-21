@@ -1,0 +1,50 @@
+site_name: taken
+site_description: Personal dotfile-style CLI for managing AI agent skills
+site_url: https://taken-cli.github.io/taken/
+repo_url: https://github.com/taken-cli/taken
+repo_name: taken-cli/taken
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - search.suggest
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Commands:
+    - taken init: commands/init.md
+    - taken add: commands/add.md
+    - taken install: commands/install.md
+    - taken use: commands/use.md
+    - taken save: commands/save.md
+    - taken update: commands/update.md
+    - taken list: commands/list.md
+    - taken remove: commands/remove.md
+    - taken git: commands/git.md
+  - Configuration: configuration.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search
