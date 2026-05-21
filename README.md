@@ -1,5 +1,8 @@
 # taken
 
+[![PyPI](https://img.shields.io/pypi/v/taken-cli)](https://pypi.org/project/taken-cli/)
+[![CI](https://github.com/taken-cli/taken/actions/workflows/ci.yml/badge.svg)](https://github.com/taken-cli/taken/actions/workflows/ci.yml)
+
 > *"A very particular set of skills, acquired over a very long career."*
 
 **taken** is a personal dotfile-style CLI for managing AI agent skills (`SKILL.md` files). Think [chezmoi](https://www.chezmoi.io/), but for agent skills — your skills live in `~/.taken/`, are git-backed, and can be linked into any project on demand.
