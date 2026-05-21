@@ -574,6 +574,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    taken git
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -590,6 +608,58 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -650,6 +720,47 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -669,7 +780,20 @@
 
 
 <h1 id="taken-git">taken git</h1>
-<p>Coming soon.</p>
+<p>Run any git command inside <code>~/.taken/</code>.</p>
+<h2 id="usage">Usage</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>taken<span class="w"> </span>git<span class="w"> </span>&lt;git<span class="w"> </span>args&gt;
+</code></pre></div>
+<h2 id="description">Description</h2>
+<p>A thin passthrough to <code>git</code> with <code>~/.taken/</code> as the working directory. Any valid git subcommand works.</p>
+<h2 id="examples">Examples</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>taken<span class="w"> </span>git<span class="w"> </span>status
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>taken<span class="w"> </span>git<span class="w"> </span>log<span class="w"> </span>--oneline
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>taken<span class="w"> </span>git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>origin<span class="w"> </span>git@github.com:you/taken-skills.git
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>taken<span class="w"> </span>git<span class="w"> </span>push<span class="w"> </span>-u<span class="w"> </span>origin<span class="w"> </span>main
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>taken<span class="w"> </span>git<span class="w"> </span>pull
+</code></pre></div>
+<p>This is the recommended way to push your <code>~/.taken/</code> repository to a remote for backup or sharing across machines.</p>
 
 
 

@@ -518,6 +518,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    taken list
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -534,6 +552,58 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#source-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source types
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -650,6 +720,47 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#source-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source types
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -669,7 +780,62 @@
 
 
 <h1 id="taken-list">taken list</h1>
-<p>Coming soon.</p>
+<p>Show all skills in your registry.</p>
+<h2 id="usage">Usage</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>taken<span class="w"> </span>list
+</code></pre></div>
+<h2 id="output">Output</h2>
+<p>Displays a table with four columns:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Skill</strong></td>
+<td>Full name in <code>namespace/skill-name</code> format</td>
+</tr>
+<tr>
+<td><strong>Source</strong></td>
+<td>How the skill was added — <code>personal</code>, <code>npx</code>, or <code>taken</code></td>
+</tr>
+<tr>
+<td><strong>Version</strong></td>
+<td>First 8 characters of the commit SHA (for installed skills), or <code>1</code> for personal skills</td>
+</tr>
+<tr>
+<td><strong>Date</strong></td>
+<td>Creation date (personal) or install date (installed)</td>
+</tr>
+</tbody>
+</table>
+<p>A count of total skills is shown below the table.</p>
+<h2 id="source-types">Source types</h2>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>personal</code></td>
+<td>Created with <code>taken add</code> or adopted from a local path without a lock file</td>
+</tr>
+<tr>
+<td><code>npx</code></td>
+<td>Adopted from a project that used the skills.sh <code>npx</code> installer</td>
+</tr>
+<tr>
+<td><code>taken</code></td>
+<td>Installed from GitHub via <code>taken install</code></td>
+</tr>
+</tbody>
+</table>
 
 
 

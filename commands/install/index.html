@@ -406,6 +406,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    taken install
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -422,6 +440,91 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#source-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source formats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#github-rate-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub rate limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -650,6 +753,80 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#source-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source formats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#github-rate-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub rate limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -669,7 +846,60 @@
 
 
 <h1 id="taken-install">taken install</h1>
-<p>Coming soon.</p>
+<p>Install one or more skills from a GitHub repository.</p>
+<h2 id="usage">Usage</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>taken<span class="w"> </span>install<span class="w"> </span>&lt;source&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div>
+<h2 id="source-formats">Source formats</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>taken<span class="w"> </span>install<span class="w"> </span>vercel-labs/agent-skills<span class="w">                       </span><span class="c1"># all skills (interactive picker)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>taken<span class="w"> </span>install<span class="w"> </span>vercel-labs/agent-skills/react-best-practices<span class="w">  </span><span class="c1"># specific skill by path</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>taken<span class="w"> </span>install<span class="w"> </span>https://github.com/vercel-labs/agent-skills<span class="w">    </span><span class="c1"># full URL</span>
+</code></pre></div>
+<h2 id="options">Options</h2>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--skill &lt;name&gt;</code></td>
+<td>Install a specific skill by name (repeatable). Skips the interactive picker.</td>
+</tr>
+<tr>
+<td><code>--ref &lt;branch\|tag\|sha&gt;</code></td>
+<td>Install from a specific branch, tag, or commit SHA. Defaults to the repo's default branch.</td>
+</tr>
+<tr>
+<td><code>--pin</code></td>
+<td>Lock to the exact commit SHA — <code>taken update</code> will never auto-upgrade this skill.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="behavior">Behavior</h2>
+<ol>
+<li>Resolves the ref to a commit SHA</li>
+<li>Discovers all <code>SKILL.md</code> files in the repository</li>
+<li>If multiple skills are found and no <code>--skill</code> filter is given, shows a fuzzy picker (space/tab to select, enter to confirm)</li>
+<li>Downloads and registers each selected skill under <code>~/.taken/skills/&lt;owner&gt;/&lt;skill-name&gt;/</code></li>
+</ol>
+<p>Already-registered skills are skipped without error.</p>
+<h2 id="examples">Examples</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Install a single specific skill non-interactively</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>taken<span class="w"> </span>install<span class="w"> </span>vercel-labs/agent-skills<span class="w"> </span>--skill<span class="w"> </span>react-best-practices
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Install multiple skills at once</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>taken<span class="w"> </span>install<span class="w"> </span>vercel-labs/agent-skills<span class="w"> </span>--skill<span class="w"> </span>react-best-practices<span class="w"> </span>--skill<span class="w"> </span>typescript
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Install from a specific tag and pin it</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>taken<span class="w"> </span>install<span class="w"> </span>vercel-labs/agent-skills<span class="w"> </span>--ref<span class="w"> </span>v1.2.0<span class="w"> </span>--pin
+</code></pre></div>
+<h2 id="github-rate-limits">GitHub rate limits</h2>
+<p>Unauthenticated requests are limited to 60/hour. Set <code>GITHUB_TOKEN</code> to avoid hitting limits:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GITHUB_TOKEN</span><span class="o">=</span>ghp_...
+</code></pre></div>
 
 
 

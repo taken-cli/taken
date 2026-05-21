@@ -462,6 +462,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    taken save
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -478,6 +496,69 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -650,6 +731,58 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -669,7 +802,31 @@
 
 
 <h1 id="taken-save">taken save</h1>
-<p>Coming soon.</p>
+<p>Push project skill edits back to your <code>~/.taken/</code> registry.</p>
+<h2 id="usage">Usage</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>taken<span class="w"> </span>save<span class="w">                       </span><span class="c1"># interactive fuzzy picker</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>taken<span class="w"> </span>save<span class="w"> </span>&lt;namespace/skill&gt;<span class="w">     </span><span class="c1"># direct, non-interactive</span>
+</code></pre></div>
+<h2 id="behavior">Behavior</h2>
+<p><code>taken save</code> is the reverse of <a href="../use/"><code>taken use</code></a>. After refining a skill while working in a project, use this command to promote those edits back to the registry so they propagate to future projects.</p>
+<p>For each selected skill:</p>
+<ul>
+<li>If the file hash matches what was originally copied — reported as "no changes", nothing written</li>
+<li>If the hash differs — the project copy is copied back to <code>~/.taken/skills/&lt;ns&gt;/&lt;name&gt;/</code>, the registry and <code>.taken.yaml</code> are updated, and a git commit is made in <code>~/.taken/</code></li>
+</ul>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>Must be run from a directory containing <code>.taken.yaml</code> (i.e., a project where <code>taken use</code> was previously run)</li>
+<li>The skill must be tracked in that <code>.taken.yaml</code></li>
+</ul>
+<h2 id="example">Example</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Edit a skill in the project</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>vim<span class="w"> </span>.agents/skills/my-skill/SKILL.md
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Push the edit back to registry</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>taken<span class="w"> </span>save<span class="w"> </span>my-namespace/my-skill
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># ✓ my-namespace/my-skill → ~/.taken/skills/my-namespace/my-skill/</span>
+</code></pre></div>
 
 
 

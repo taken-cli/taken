@@ -378,6 +378,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    taken add
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -394,6 +412,69 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adopt-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adopt mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -650,6 +731,58 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adopt-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adopt mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -669,7 +802,38 @@
 
 
 <h1 id="taken-add">taken add</h1>
-<p>Coming soon.</p>
+<p>Create a new personal skill or adopt an existing skill folder into taken management.</p>
+<h2 id="usage">Usage</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>taken<span class="w"> </span>add<span class="w"> </span>&lt;skill-name&gt;<span class="w">       </span><span class="c1"># create a new skill</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>taken<span class="w"> </span>add<span class="w"> </span>&lt;path/to/folder&gt;<span class="w">   </span><span class="c1"># adopt an existing skill folder</span>
+</code></pre></div>
+<h2 id="create-mode">Create mode</h2>
+<p>When you pass a plain name, taken scaffolds a new skill under your namespace and opens it in your editor.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>taken<span class="w"> </span>add<span class="w"> </span>my-skill
+</code></pre></div>
+<p>What happens:</p>
+<ol>
+<li>Creates <code>~/.taken/skills/&lt;username&gt;/my-skill/SKILL.md</code></li>
+<li>Registers it as a <code>personal</code> skill</li>
+<li>Opens <code>SKILL.md</code> in your <code>$VISUAL</code> / <code>$EDITOR</code> (falls back to <code>vim</code>)</li>
+</ol>
+<p><strong>Name rules:</strong> lowercase letters, numbers, hyphens, and underscores only. Must start with a letter or number. Do not include a namespace — your username is added automatically.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>taken<span class="w"> </span>add<span class="w"> </span>react-best-practices<span class="w">   </span><span class="c1"># ✓</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>taken<span class="w"> </span>add<span class="w"> </span>you/react-practices<span class="w">    </span><span class="c1"># ✗ — namespace not allowed here</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>taken<span class="w"> </span>add<span class="w"> </span>my<span class="w"> </span>skill<span class="w">               </span><span class="c1"># ✗ — no spaces</span>
+</code></pre></div>
+<h2 id="adopt-mode">Adopt mode</h2>
+<p>When you pass a path (absolute or relative, must point to a directory), taken copies it into <code>~/.taken/</code> and registers it.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>taken<span class="w"> </span>add<span class="w"> </span>./agents/my-skill/
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>taken<span class="w"> </span>add<span class="w"> </span>/path/to/skill-folder/
+</code></pre></div>
+<p>Taken detects the argument as a path if it starts with <code>/</code>, <code>./</code>, or <code>../</code>.</p>
+<p><strong>Provenance detection:</strong> if a <code>skills.sh</code> lock file (<code>.agents/skills.lock</code>) exists in the current project, taken reads it to determine the original source, namespace, and version of the skill automatically. Without a lock file, the skill is registered as personal under your namespace.</p>
+<h2 id="notes">Notes</h2>
+<ul>
+<li>If the skill already exists in your registry, the command exits with an error.</li>
+<li>After adoption or creation, a git commit is made in <code>~/.taken/</code> automatically (if <code>auto_commit</code> is enabled).</li>
+</ul>
 
 
 

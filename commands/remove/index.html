@@ -546,6 +546,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    taken remove
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -562,6 +580,47 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -650,6 +709,36 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -669,7 +758,26 @@
 
 
 <h1 id="taken-remove">taken remove</h1>
-<p>Coming soon.</p>
+<p>Remove a skill from your registry and delete its files from <code>~/.taken/</code>.</p>
+<h2 id="usage">Usage</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>taken<span class="w"> </span>remove<span class="w">                     </span><span class="c1"># interactive fuzzy picker</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>taken<span class="w"> </span>remove<span class="w"> </span>&lt;namespace/skill&gt;<span class="w">   </span><span class="c1"># direct, non-interactive</span>
+</code></pre></div>
+<h2 id="behavior">Behavior</h2>
+<p>For each selected skill, taken asks for confirmation before removing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Remove namespace/my-skill? [y/N]
+</code></pre></div>
+<p>On confirmation:</p>
+<ol>
+<li>Deletes <code>~/.taken/skills/&lt;namespace&gt;/&lt;skill-name&gt;/</code></li>
+<li>Removes the entry from <code>registry.yaml</code></li>
+<li>Commits the change to <code>~/.taken/</code></li>
+</ol>
+<p><strong>Project copies are not affected.</strong> Skills already copied into <code>.agents/skills/</code> in your projects remain untouched — <code>taken remove</code> only affects the registry.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This is irreversible unless you have pushed <code>~/.taken/</code> to a remote and can restore from there. For GitHub-installed skills, you can always reinstall with <code>taken install</code>.</p>
+</div>
 
 
 
