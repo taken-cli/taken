@@ -46,7 +46,10 @@ taken install vercel-labs/agent-skills
 taken install vercel-labs/agent-skills/react-best-practices
 taken install https://github.com/vercel-labs/agent-skills
 ```
-Interactive fuzzy picker when multiple skills are found. Use `--skill` to install specific ones non-interactively, `--ref` to pin to a branch/tag/SHA, `--pin` to lock the version.
+Interactive fuzzy picker when multiple skills are found. Key flags:
+- `--skill <name>` — install a specific skill non-interactively (repeatable)
+- `--ref <branch|tag|sha>` — install from a specific ref
+- `--pin` — lock to the exact commit SHA so `taken update` never auto-upgrades it
 
 **5. Use a skill in a project**
 ```bash
@@ -81,6 +84,7 @@ Re-copies the latest registry version into the project. Warns before overwriting
 | `taken update [namespace/skill]` | Re-copy latest registry version into project |
 | `taken list` | Show all skills in the registry |
 | `taken remove <namespace/skill>` | Remove a skill from registry |
+| `taken git <args>` | Run any git command inside `~/.taken/` |
 
 ---
 
@@ -92,17 +96,10 @@ When you run `taken use`, the skill is copied (never symlinked) into `.agents/sk
 
 ---
 
-## Storage Layout
+## Environment Variables
 
-```
-~/.taken/
-  config.yaml       # username, preferences
-  registry.yaml     # all skills + metadata
-  skills/
-    you/
-      my-skill/
-        SKILL.md
-    vercel-labs/
-      react-best-practices/
-        SKILL.md
-```
+| Variable | Description |
+|---|---|
+| `GITHUB_TOKEN` | GitHub personal access token — set this to avoid API rate limits when using `taken install` or `taken update` |
+| `TAKEN_HOME` | Override the default `~/.taken/` location |
+| `VISUAL` / `EDITOR` | Editor opened by `taken add` (falls back to `vim`) |
