@@ -112,8 +112,9 @@ def discover_skills(owner: str, repo: str, sha: str) -> list[GitHubSkill]:
             continue
         path: str = item["path"]
         if path == "SKILL.md":
-            # Root-level skill — use the commit SHA as the folder hash
-            skills.append(GitHubSkill(name=repo, skill_path="", skill_folder_hash=sha))
+            # Root-level skill — use owner/repo to avoid cross-owner name collisions.
+            # Use the commit SHA as the folder hash.
+            skills.append(GitHubSkill(name=f"{owner}/{repo}", skill_path="", skill_folder_hash=sha))
         elif path.endswith("/SKILL.md"):
             skill_path = path[: -len("/SKILL.md")]
             name = skill_path.rsplit("/", 1)[-1]
