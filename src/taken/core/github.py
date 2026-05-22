@@ -155,4 +155,7 @@ def download_skill(owner: str, repo: str, skill_path: str, ref: str, dest: Path)
             copied += 1
 
         if copied == 0:
-            raise RuntimeError(f"No files found for skill path '{skill_path}' in downloaded archive.")
+            raise RuntimeError(
+                f"No files found for skill path '{skill_path}' in downloaded archive for "
+                f"repository '{owner}/{repo}' at ref '{ref}'."
+            )
