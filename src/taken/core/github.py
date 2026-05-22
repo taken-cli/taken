@@ -6,6 +6,7 @@ import urllib.error
 import urllib.request
 import zipfile
 from dataclasses import dataclass
+from importlib import metadata as importlib_metadata
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,11 @@ _SEGMENT = re.compile(r"^[a-zA-Z0-9_.-]+$")
 _NPX_PREFIX = re.compile(r"^\s*npx\s+skills\s+add\s+", re.IGNORECASE)
 _GITHUB_PREFIX = re.compile(r"^https?://github\.com/", re.IGNORECASE)
 _TREE_SUFFIX = re.compile(r"/tree/[^/]+.*$")
+
+try:
+    _CLI_VERSION = importlib_metadata.version("taken-cli")
+except importlib_metadata.PackageNotFoundError:
+    _CLI_VERSION = "0.0.0"
 
 
 def normalize_source(raw: str) -> str:
@@ -57,7 +63,7 @@ class GitHubSkill:
 def _api_headers() -> dict[str, str]:
     headers: dict[str, str] = {
         "Accept": "application/vnd.github+json",
-        "User-Agent": "taken-cli/0.1",
+        "User-Agent": f"taken-cli/{_CLI_VERSION}",
         "X-GitHub-Api-Version": "2022-11-28",
     }
     token = os.environ.get("GITHUB_TOKEN")
@@ -137,9 +143,7 @@ def download_skill(owner: str, repo: str, skill_path: str, ref: str, dest: Path)
     with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
         names = zf.namelist()
         if not names:
-            raise RuntimeError(
-                f"Downloaded zip archive is empty for repository '{owner}/{repo}' at ref '{ref}'."
-            )
+            raise RuntimeError(f"Downloaded zip archive is empty for repository '{owner}/{repo}' at ref '{ref}'.")
 
         # Zipball top-level dir is "{owner}-{repo}-{sha_prefix}/"
         top_level = names[0].split("/")[0]
