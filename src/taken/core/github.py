@@ -136,7 +136,9 @@ def download_skill(owner: str, repo: str, skill_path: str, ref: str, dest: Path)
     with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
         names = zf.namelist()
         if not names:
-            raise RuntimeError("Downloaded zip archive is empty.")
+            raise RuntimeError(
+                f"Downloaded zip archive is empty for repository '{owner}/{repo}' at ref '{ref}'."
+            )
 
         # Zipball top-level dir is "{owner}-{repo}-{sha_prefix}/"
         top_level = names[0].split("/")[0]
