@@ -55,6 +55,9 @@ test = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 anyio_mode = "asyncio"
+markers = [
+    "integration: end-to-end tests using the real CLI binary",
+]
 
 [tool.ruff]
 line-length = 120

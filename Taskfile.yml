@@ -26,16 +26,35 @@ tasks:
       - uv run ruff format --check --diff .
 
   test:
-    desc: Run tests with pytest
+    desc: Run unit tests (excludes integration)
     cmds:
-      - uv run pytest
+      - uv run pytest -m "not integration"
+
+  test:integration:
+    desc: Run integration tests against the real CLI binary
+    aliases:
+      - test:int
+      - test:i
+    cmds:
+      - uv run pytest -m integration -v
+
+  test:all:
+    desc: Run all tests including integration
+    aliases:
+      - test:a
+    cmds:
+      - uv run pytest -v
 
   docs:serve:
     desc: Serve docs locally with live reload
+    aliases:
+      - docs:s
     cmds:
       - uv run --group docs mkdocs serve
 
   docs:build:
     desc: Build docs to site/
+    aliases:
+      - docs:b
     cmds:
       - uv run --group docs mkdocs build

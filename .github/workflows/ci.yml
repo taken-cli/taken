@@ -16,7 +16,11 @@ jobs:
     needs: lint
     uses: ./.github/workflows/_test.yml
 
-  build:
+  integration:
     needs: test
+    uses: ./.github/workflows/_integration.yml
+
+  build:
+    needs: [test, integration]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     uses: ./.github/workflows/_build.yml
