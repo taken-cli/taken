@@ -13,13 +13,14 @@ from rich.panel import Panel
 from rich.prompt import Confirm
 
 from taken.core import paths
-from taken.core.config import is_config_exists
+from taken.core.config import is_config_exists, read_config
 from taken.core.git import auto_commit_and_push
 from taken.core.github import discover_skills, download_skill, get_commit_sha, get_default_branch
 from taken.core.hashing import compute_skill_hash
-from taken.core.project import is_project_config_exists, read_project_config, write_project_config
+from taken.core.mirror import edited_copies, main_skill_dir, remove_path, sync_mirrors
+from taken.core.project import is_project_config_exists, read_project_config, resolve_layout, write_project_config
 from taken.core.registry import read_registry, write_registry
-from taken.models.project import ProjectConfig, ProjectSkillEntry
+from taken.models.project import ProjectConfig, ProjectSkillEntry, SkillLayout
 from taken.models.registry import Registry, RegistryEntry, SkillSource, VersionPin
 from taken.utils.console import console, err_console
 
@@ -125,14 +126,16 @@ def _resolve_selected(
 def _process_skill(
     full_name: str,
     project_config: ProjectConfig,
+    layout: SkillLayout,
     updated: list[str],
     skipped: list[str],
     up_to_date: list[str],
     suggest_save: list[str],
 ) -> None:
     namespace, name = full_name.split("/", 1)
+    project_root = Path.cwd()
     registry_skill_dir = paths.TAKEN_HOME / "skills" / namespace / name
-    project_skill_dir = Path.cwd() / project_config.skills_dir / name
+    project_skill_dir = main_skill_dir(project_root, layout, name)
 
     if not registry_skill_dir.exists():
         err_console.print(
@@ -147,11 +150,7 @@ def _process_skill(
     existing = project_config.skills[full_name]
     registry_hash = compute_skill_hash(registry_skill_dir)
     registry_changed = registry_hash != existing.copied_hash
-
-    project_edited = False
-    if project_skill_dir.exists():
-        project_hash = compute_skill_hash(project_skill_dir)
-        project_edited = project_hash != existing.copied_hash
+    project_edited = bool(edited_copies(project_root, layout, name, existing.copied_hash))
 
     if not registry_changed and not project_edited:
         up_to_date.append(full_name)
@@ -167,9 +166,13 @@ def _process_skill(
             skipped.append(full_name)
             return
 
-    if project_skill_dir.exists():
-        shutil.rmtree(project_skill_dir)
+    project_skill_dir.parent.mkdir(parents=True, exist_ok=True)
+    remove_path(project_skill_dir)
     shutil.copytree(registry_skill_dir, project_skill_dir)
+    for dst in sync_mirrors(project_root, layout, name):
+        err_console.print(
+            f"[yellow]⚠[/yellow]  Could not symlink [bold]{dst.relative_to(project_root)}[/bold] — copied instead."
+        )
 
     new_hash = compute_skill_hash(project_skill_dir)
     project_config.skills[full_name] = ProjectSkillEntry(
@@ -177,7 +180,7 @@ def _process_skill(
         copied_hash=new_hash,
     )
 
-    updated.append(f"[green]✓[/green] [bold]{full_name}[/bold] → {project_config.skills_dir}/{name}/")
+    updated.append(f"[green]✓[/green] [bold]{full_name}[/bold] → {layout.main_dir}/{name}/")
 
 
 def _run_github_refresh_pass(selected: list[str]) -> _GitHubRefreshResult:
@@ -229,7 +232,7 @@ def update(
     if not is_project_config_exists(Path.cwd()):
         err_console.print(
             Panel(
-                "No [bold].taken.yaml[/bold] found in the current directory.\n"
+                "This directory is not tracked by taken yet.\n"
                 "Run [bold]taken use[/bold] to add skills to this project first.",
                 title="[red]Not a Taken Project[/red]",
                 border_style="red",
@@ -249,6 +252,7 @@ def update(
         )
         raise typer.Exit(code=1)
 
+    layout = resolve_layout(read_config(paths.TAKEN_HOME), project_config)
     selected = _resolve_selected(namespace_skill, project_config)
     refresh_result = _run_github_refresh_pass(selected)
     refreshed_from_github = refresh_result.refreshed_lines
@@ -259,11 +263,11 @@ def update(
     suggest_save: list[str] = []
 
     for full_name in selected:
-        _process_skill(full_name, project_config, updated, skipped, up_to_date, suggest_save)
+        _process_skill(full_name, project_config, layout, updated, skipped, up_to_date, suggest_save)
 
     if updated:
         write_project_config(project_config, Path.cwd())
-        lines = "\n".join(updated) + "\n\n[dim].taken.yaml updated[/dim]"
+        lines = "\n".join(updated) + "\n\n[dim]~/.taken/projects.yaml updated[/dim]"
         console.print(
             Panel(
                 lines,

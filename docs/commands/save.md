@@ -16,12 +16,14 @@ taken save <namespace/skill>     # direct, non-interactive
 For each selected skill:
 
 - If the file hash matches what was originally copied — reported as "no changes", nothing written
-- If the hash differs — the project copy is copied back to `~/.taken/skills/<ns>/<name>/`, the registry and `.taken.yaml` are updated, and a git commit is made in `~/.taken/`
+- If the hash differs — the edited copy is copied back to `~/.taken/skills/<ns>/<name>/`, the registry and `~/.taken/projects.yaml` are updated, and a git commit is made in `~/.taken/`
+
+In `copy` mirror mode, taken checks every copy (e.g. `.agents/skills/<name>` and `.claude/skills/<name>`) and saves whichever one changed. If more than one copy was edited differently, it asks which to keep. After saving, all copies are brought back in sync.
 
 ## Requirements
 
-- Must be run from a directory containing `.taken.yaml` (i.e., a project where `taken use` was previously run)
-- The skill must be tracked in that `.taken.yaml`
+- Must be run from a project where `taken use` was previously run (tracked in `~/.taken/projects.yaml`)
+- The skill must be tracked for that project
 
 ## Example
 

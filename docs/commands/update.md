@@ -20,6 +20,8 @@ For each selected skill, taken compares the current project copy against the reg
 | Registry unchanged, project has local edits | Suggests `taken save` — no overwrite |
 | Registry changed, project also has local edits | Prompts before overwriting |
 
+"Project" here means every real copy of the skill — the main dir, plus mirror dirs in `copy` mode. After updating, mirrors are recreated (symlinked or copied per the project's mirror mode).
+
 ## GitHub refresh (floating skills)
 
 For skills installed via [`taken install`](install.md) that are **not pinned**, `taken update` first checks GitHub for upstream changes before copying to the project:
@@ -33,7 +35,7 @@ Pinned skills (installed with `--pin`) are never auto-upgraded.
 
 ## Requirements
 
-Must be run from a directory containing `.taken.yaml`.
+Must be run from a project where `taken use` was previously run (tracked in `~/.taken/projects.yaml`).
 
 ## Example
 
