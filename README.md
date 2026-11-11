@@ -21,6 +21,13 @@ uv tool install taken-cli
 pipx install taken-cli
 ```
 
+Or run it without installing, via [uvx](https://docs.astral.sh/uv/guides/tools/):
+
+```bash
+uvx taken-cli init
+uvx taken-cli use
+```
+
 ---
 
 ## Quick Start

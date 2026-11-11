@@ -1,6 +1,6 @@
 [project]
 name = "taken-cli"
-version = "0.1.1"
+version = "0.2.0"
 description = "Personal dotfile-style CLI for managing AI agent skills"
 readme = "README.md"
 license = { text = "MIT" }
@@ -29,9 +29,10 @@ invalid-annotation = "error"
 
 [project.scripts]
 taken = "taken.main:main"
+taken-cli = "taken.main:main"  # lets `uvx taken-cli ...` work
 
 [build-system]
-requires = ["uv_build>=0.10.9,<0.11.0"]
+requires = ["uv_build>=0.10.9,<0.14.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
