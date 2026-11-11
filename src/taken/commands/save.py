@@ -16,7 +16,13 @@ from taken.core.config import is_config_exists, read_config
 from taken.core.git import auto_commit_and_push
 from taken.core.hashing import compute_skill_hash
 from taken.core.mirror import edited_copies, main_skill_dir, remove_path, sync_mirrors
-from taken.core.project import is_project_config_exists, read_project_config, resolve_layout, write_project_config
+from taken.core.project import (
+    is_project_config_exists,
+    read_project_config,
+    resolve_layout,
+    skill_layout,
+    write_project_config,
+)
 from taken.core.registry import read_registry, write_registry
 from taken.models.project import ProjectConfig, ProjectSkillEntry, SkillLayout
 from taken.models.registry import Registry
@@ -93,6 +99,7 @@ def _process_skill(
     registry_skill_dir = paths.TAKEN_HOME / "skills" / namespace / name
 
     existing = project_config.skills[full_name]
+    layout = skill_layout(layout, existing)
     edited = edited_copies(project_root, layout, name, existing.copied_hash)
 
     if not edited:
@@ -115,6 +122,7 @@ def _process_skill(
     project_config.skills[full_name] = ProjectSkillEntry(
         copied_at=existing.copied_at,
         copied_hash=new_hash,
+        mirror_dirs=existing.mirror_dirs,
     )
 
     registry_entry = registry.get(full_name)

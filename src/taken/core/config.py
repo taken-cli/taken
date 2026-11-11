@@ -1,5 +1,5 @@
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, cast
 
 from ruamel.yaml import YAML
@@ -88,3 +88,21 @@ def read_config(taken_home: Path | None = None) -> TakenConfig:
 
 def is_config_exists(taken_home: Path) -> bool:
     return get_config_path(taken_home).exists()
+
+
+def normalize_mirror_dir(raw: str, main_dir: str) -> str:
+    """
+    Validate and normalize a mirror dir (e.g. '.cursor/skills/' -> '.cursor/skills').
+
+    Raises ValueError for absolute paths, parent-dir escapes, or the main skills dir itself.
+    """
+    cleaned = raw.strip().replace("\\", "/")
+    path = PurePosixPath(cleaned)
+    if not cleaned or path.is_absolute() or cleaned.startswith("~"):
+        raise ValueError("Mirror dir must be a path relative to the project root, e.g. .cursor/skills")
+    if ".." in path.parts:
+        raise ValueError("Mirror dir must stay inside the project (no '..').")
+    normalized = str(path)
+    if normalized in (".", str(PurePosixPath(main_dir))):
+        raise ValueError(f"{normalized} is the main skills dir — it can't also be a mirror.")
+    return normalized

@@ -40,6 +40,7 @@ nav:
     - taken update: commands/update.md
     - taken list: commands/list.md
     - taken remove: commands/remove.md
+    - taken mirrors: commands/mirrors.md
     - taken git: commands/git.md
   - Configuration: configuration.md
 

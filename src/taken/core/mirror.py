@@ -1,10 +1,19 @@
 import os
 import shutil
 from pathlib import Path
+from typing import NamedTuple
 
 from taken.core.hashing import compute_skill_hash
 from taken.models.config import MirrorMode
 from taken.models.project import SkillLayout
+
+
+class MirrorResult(NamedTuple):
+    """Outcome of mirroring one skill into one mirror dir."""
+
+    path: Path
+    is_link: bool
+    fell_back: bool  # wanted a symlink but had to copy
 
 
 def main_skill_dir(project_root: Path, layout: SkillLayout, name: str) -> Path:
@@ -31,29 +40,64 @@ def remove_path(path: Path) -> None:
         shutil.rmtree(path)
 
 
-def sync_mirrors(project_root: Path, layout: SkillLayout, name: str) -> list[Path]:
+def sync_mirrors(project_root: Path, layout: SkillLayout, name: str) -> list[MirrorResult]:
     """
     Recreate every mirror of a skill from the main copy, using the layout's mirror mode.
 
     Symlinks are relative, so they keep working when the project is moved or cloned.
     If a symlink cannot be created (e.g. Windows without privileges), falls back to a copy.
-    Returns the mirrors that fell back from symlink to copy.
     """
     main = main_skill_dir(project_root, layout, name)
-    fell_back: list[Path] = []
+    results: list[MirrorResult] = []
 
     for dst in mirror_skill_dirs(project_root, layout, name):
         dst.parent.mkdir(parents=True, exist_ok=True)
         remove_path(dst)
+        fell_back = False
         if layout.mirror_mode == MirrorMode.SYMLINK:
             try:
                 dst.symlink_to(os.path.relpath(main, dst.parent), target_is_directory=True)
+                results.append(MirrorResult(path=dst, is_link=True, fell_back=False))
                 continue
             except OSError:
-                fell_back.append(dst)
+                fell_back = True
         shutil.copytree(main, dst)
+        results.append(MirrorResult(path=dst, is_link=False, fell_back=fell_back))
 
-    return fell_back
+    return results
+
+
+def remove_unselected_mirrors(
+    project_root: Path,
+    layout: SkillLayout,
+    candidate_dirs: list[str],
+    name: str,
+    baseline_hash: str | None,
+) -> list[Path]:
+    """
+    Remove this skill from candidate mirror dirs that are not in the layout.
+
+    Only removes what taken owns: symlinks to the main copy, or copies that still match
+    the last-written hash. Anything edited or foreign is left alone. Returns removed paths.
+    """
+    main = main_skill_dir(project_root, layout, name)
+    removed: list[Path] = []
+    for d in candidate_dirs:
+        if d in layout.mirror_dirs:
+            continue
+        path = project_root / d / name
+        if path == main:
+            continue
+        is_ours = is_managed_link(path, main) or (
+            baseline_hash is not None
+            and path.is_dir()
+            and not path.is_symlink()
+            and compute_skill_hash(path) == baseline_hash
+        )
+        if is_ours:
+            remove_path(path)
+            removed.append(path)
+    return removed
 
 
 def real_copies(project_root: Path, layout: SkillLayout, name: str) -> list[Path]:

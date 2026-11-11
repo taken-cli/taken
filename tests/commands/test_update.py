@@ -860,3 +860,33 @@ async def test_update__copy_mode_mirror_edited_and_registry_changed_user_decline
     assert "local changes" in result.output
     assert "Skipped" in result.output
     assert (mirror / "SKILL.md").read_text() == "# edited in claude dir"
+
+
+@pytest.mark.anyio
+async def test_update__skill_with_chosen_mirrors__only_refreshes_those_dirs(
+    taken_home: Path,
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    scaffold_registry_skill: Callable[[str, str], Path],
+) -> None:
+    # Arrange — two mirror dirs available, skill used with only .cursor
+    sample_config.skills.mirror_dirs = [".claude/skills", ".cursor/skills"]
+    write_config(sample_config)
+    registry = Registry()
+    registry.add(RegistryEntryFactory.build(namespace="alice", name="my-skill", source=SkillSource.PERSONAL))
+    write_registry(registry, taken_home)
+    registry_skill = scaffold_registry_skill("alice", "my-skill")
+    monkeypatch.chdir(tmp_path)
+    cli_runner.invoke(app, ["use", "alice/my-skill", "--mirror", ".cursor/skills"])
+    (registry_skill / "SKILL.md").write_text("# new registry version")
+
+    # Act
+    result = cli_runner.invoke(app, ["update", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert (tmp_path / ".cursor" / "skills" / "my-skill").is_symlink()
+    assert not (tmp_path / ".claude" / "skills" / "my-skill").exists()
+    assert read_project_config(tmp_path).skills["alice/my-skill"].mirror_dirs == [".cursor/skills"]

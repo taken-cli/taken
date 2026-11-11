@@ -8,6 +8,10 @@ from taken.models.config import MirrorMode
 class ProjectSkillEntry(BaseModel):
     copied_at: datetime
     copied_hash: str
+    mirror_dirs: list[str] | None = Field(
+        default=None,
+        description="Mirror dirs chosen for this skill at `taken use`. None means the global mirror_dirs.",
+    )
 
 
 class ProjectConfig(BaseModel):

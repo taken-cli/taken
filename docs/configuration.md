@@ -19,11 +19,11 @@
 | `auto_commit` | If `true`, taken commits to `~/.taken/` automatically after mutating commands. Not yet CLI-exposed — defaults to `true`. |
 | `auto_push` | If `true`, taken pushes after each auto-commit. Not yet CLI-exposed — defaults to `false`. |
 | `skills.main_dir` | Main skills dir inside a project — the tracked copy. Defaults to `.agents/skills`. |
-| `skills.mirror_dirs` | Extra dirs that mirror the main one. Defaults to `[.claude/skills]`. Add e.g. `.cursor/skills` to mirror there too. |
+| `skills.mirror_dirs` | Mirror folders offered by `taken use`. Defaults to `[.claude/skills]`. Manage with [`taken mirrors`](commands/mirrors.md). |
 | `skills.mirror_mode` | `symlink` (default) or `copy`. Chosen during `taken init`; override per project with `taken use --mode`. |
 
 ## projects.yaml
 
-`~/.taken/projects.yaml` records which registry skills you copied into which project, keyed by absolute project path, along with a content hash used to detect local edits and any per-project `mirror_mode` override. It is written by `use`, `save` and `update`.
+`~/.taken/projects.yaml` records which registry skills you copied into which project, keyed by absolute project path, along with a content hash used to detect local edits, the mirror folders chosen for each skill, and any per-project `mirror_mode` override. It is written by `use`, `save` and `update`.
 
 It is machine-local, so taken adds it to `~/.taken/.gitignore` and it is never committed or pushed. Nothing taken-specific is written inside your projects.
