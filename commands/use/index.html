@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/logo.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
     
     
       
@@ -31,10 +31,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -507,6 +507,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mirror-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mirror mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#overwrite-protection" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -760,6 +771,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mirror-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mirror mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#overwrite-protection" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -802,30 +824,54 @@
 
 
 <h1 id="taken-use">taken use</h1>
-<p>Copy a skill from your registry into the current project.</p>
+<p>Copy a skill from your registry into the current project and mirror it into other agent directories.</p>
 <h2 id="usage">Usage</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>taken<span class="w"> </span>use<span class="w">                        </span><span class="c1"># interactive fuzzy picker</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>taken<span class="w"> </span>use<span class="w"> </span>&lt;namespace/skill&gt;<span class="w">      </span><span class="c1"># direct, non-interactive</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>taken<span class="w"> </span>use<span class="w">                              </span><span class="c1"># interactive fuzzy picker</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>taken<span class="w"> </span>use<span class="w"> </span>&lt;namespace/skill&gt;<span class="w">            </span><span class="c1"># direct, non-interactive</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>taken<span class="w"> </span>use<span class="w"> </span>&lt;namespace/skill&gt;<span class="w"> </span>--mode<span class="w"> </span>copy<span class="w">   </span><span class="c1"># override mirror mode for this project (remembered)</span>
 </code></pre></div>
 <h2 id="behavior">Behavior</h2>
 <ol>
 <li>If no argument is given, shows a fuzzy picker over your full registry (space/tab to select multiple, enter to confirm)</li>
-<li>Copies the skill folder into <code>.agents/skills/&lt;skill-name&gt;/</code> in the current working directory</li>
-<li>Records the copy in <code>.taken.yaml</code> at the project root (created if it doesn't exist)</li>
+<li>Copies the skill folder into the main skills dir — <code>.agents/skills/&lt;skill-name&gt;/</code> by default</li>
+<li>Mirrors it into each mirror dir — <code>.claude/skills/&lt;skill-name&gt;/</code> by default — as a relative symlink or a full copy</li>
+<li>Records the copy in <code>~/.taken/projects.yaml</code>, keyed by the project path</li>
 </ol>
-<p><code>.taken.yaml</code> is meant to be committed — it lets teammates use the skills without needing taken installed.</p>
+<p>Nothing taken-specific is written into the project — only the skill folders themselves. Tracking is personal and lives in <code>~/.taken/</code>.</p>
+<h2 id="mirror-mode">Mirror mode</h2>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>What lands in <code>.claude/skills/&lt;name&gt;</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>symlink</code> (default)</td>
+<td>A relative link to <code>../../.agents/skills/&lt;name&gt;</code> — one real copy, always in sync. Works after cloning.</td>
+</tr>
+<tr>
+<td><code>copy</code></td>
+<td>An independent full copy. <code>update</code> refreshes every copy; <code>save</code> picks up edits from whichever copy changed.</td>
+</tr>
+</tbody>
+</table>
+<p>The default comes from <code>skills.mirror_mode</code> in <a href="../../configuration/"><code>config.yaml</code></a> (chosen during <code>taken init</code>). <code>--mode</code> overrides it for the current project and is remembered for later commands. If a symlink cannot be created (e.g. on Windows without the right permissions), taken falls back to a copy and warns.</p>
 <h2 id="overwrite-protection">Overwrite protection</h2>
-<p>If a skill already exists in the project and you've modified it locally, taken detects the change by comparing file hashes and prompts before overwriting:</p>
+<p>If a skill already exists in the project and you've modified any of its copies, taken detects the change by comparing file hashes and prompts before overwriting:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>⚠  my-skill has local changes in your project.
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  Overwrite my-skill? [y/N]
 </code></pre></div>
+<p>If a mirror location (e.g. <code>.claude/skills/my-skill</code>) already exists and wasn't created by taken, it asks before replacing it.</p>
 <p>Decline to keep your local edits. Use <a href="../save/"><code>taken save</code></a> to push them back to the registry first.</p>
 <h2 id="example">Example</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">cd</span><span class="w"> </span>my-project
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>taken<span class="w"> </span>use
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># → fuzzy picker → select react-best-practices, typescript</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># → copies to .agents/skills/react-best-practices/ and .agents/skills/typescript/</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># → updates .taken.yaml</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># → links .claude/skills/react-best-practices/ and .claude/skills/typescript/</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># → tracked in ~/.taken/projects.yaml</span>
 </code></pre></div>
 
 
@@ -882,10 +928,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.instant", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.instant", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
     
   </body>

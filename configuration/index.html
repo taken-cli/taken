@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/logo.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
     
     
       
@@ -29,10 +29,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -677,6 +677,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#projectsyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        projects.yaml
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -727,6 +738,17 @@
     <span class="md-ellipsis">
       
         config.yaml
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#projectsyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        projects.yaml
       
     </span>
   </a>
@@ -803,8 +825,23 @@
 <td><code>auto_push</code></td>
 <td>If <code>true</code>, taken pushes after each auto-commit. Not yet CLI-exposed — defaults to <code>false</code>.</td>
 </tr>
+<tr>
+<td><code>skills.main_dir</code></td>
+<td>Main skills dir inside a project — the tracked copy. Defaults to <code>.agents/skills</code>.</td>
+</tr>
+<tr>
+<td><code>skills.mirror_dirs</code></td>
+<td>Extra dirs that mirror the main one. Defaults to <code>[.claude/skills]</code>. Add e.g. <code>.cursor/skills</code> to mirror there too.</td>
+</tr>
+<tr>
+<td><code>skills.mirror_mode</code></td>
+<td><code>symlink</code> (default) or <code>copy</code>. Chosen during <code>taken init</code>; override per project with <code>taken use --mode</code>.</td>
+</tr>
 </tbody>
 </table>
+<h2 id="projectsyaml">projects.yaml</h2>
+<p><code>~/.taken/projects.yaml</code> records which registry skills you copied into which project, keyed by absolute project path, along with a content hash used to detect local edits and any per-project <code>mirror_mode</code> override. It is written by <code>use</code>, <code>save</code> and <code>update</code>.</p>
+<p>It is machine-local, so taken adds it to <code>~/.taken/.gitignore</code> and it is never committed or pushed. Nothing taken-specific is written inside your projects.</p>
 
 
 
@@ -860,10 +897,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "navigation.instant", "search.suggest", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "navigation.instant", "search.suggest", "content.code.copy"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
     
   </body>

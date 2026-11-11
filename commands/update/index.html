@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/logo.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
     
     
       
@@ -31,10 +31,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -857,6 +857,7 @@
 </tr>
 </tbody>
 </table>
+<p>"Project" here means every real copy of the skill — the main dir, plus mirror dirs in <code>copy</code> mode. After updating, mirrors are recreated (symlinked or copied per the project's mirror mode).</p>
 <h2 id="github-refresh-floating-skills">GitHub refresh (floating skills)</h2>
 <p>For skills installed via <a href="../install/"><code>taken install</code></a> that are <strong>not pinned</strong>, <code>taken update</code> first checks GitHub for upstream changes before copying to the project:</p>
 <ol>
@@ -867,7 +868,7 @@
 </ol>
 <p>Pinned skills (installed with <code>--pin</code>) are never auto-upgraded.</p>
 <h2 id="requirements">Requirements</h2>
-<p>Must be run from a directory containing <code>.taken.yaml</code>.</p>
+<p>Must be run from a project where <code>taken use</code> was previously run (tracked in <code>~/.taken/projects.yaml</code>).</p>
 <h2 id="example">Example</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>taken<span class="w"> </span>update<span class="w"> </span>vercel-labs/react-best-practices
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># ↑ vercel-labs/react-best-practices abc123 → def456  (refreshed from GitHub)</span>
@@ -928,10 +929,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.instant", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.instant", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
     
   </body>
