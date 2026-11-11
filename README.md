@@ -58,7 +58,7 @@ Interactive fuzzy picker when multiple skills are found. Key flags:
 ```bash
 taken use
 ```
-Fuzzy-picks from your registry and copies the skill into `.agents/skills/` in the current project. Records state in `.taken.yaml` (committed to git — no taken dependency needed for teammates).
+Fuzzy-picks from your registry, copies the skill into `.agents/skills/` in the current project, and mirrors it into `.claude/skills/` (symlink or copy, your choice). Tracking lives in `~/.taken/projects.yaml` — nothing taken-specific is written into the project.
 
 **6. Push edits back to registry**
 ```bash
@@ -95,7 +95,7 @@ Re-copies the latest registry version into the project. Warns before overwriting
 
 Skills live in `~/.taken/skills/<namespace>/<skill-name>/`. The registry at `~/.taken/registry.yaml` is the single source of truth for provenance — tracking whether a skill was created personally, adopted from a project, or installed from GitHub.
 
-When you run `taken use`, the skill is copied (never symlinked) into `.agents/skills/` and tracked in `.taken.yaml` at the project root. This file is committed to git, making the project self-contained — teammates don't need taken installed to use the skills.
+When you run `taken use`, the skill is copied into `.agents/skills/` and mirrored into `.claude/skills/` — as a relative symlink (default) or a full copy, set globally in `config.yaml` or per project with `--mode`. Which skills you copied where is personal state, tracked in `~/.taken/projects.yaml` (git-ignored, never pushed). The project only contains the skill folders, so teammates don't need taken installed.
 
 ---
 

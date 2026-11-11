@@ -8,10 +8,10 @@ from typer.testing import CliRunner
 
 from taken.core.config import write_config
 from taken.core.hashing import compute_skill_hash
-from taken.core.project import read_project_config, write_project_config
+from taken.core.project import read_project_config, read_projects_state, write_project_config
 from taken.core.registry import write_registry
 from taken.main import app
-from taken.models.config import TakenConfig
+from taken.models.config import MirrorMode, TakenConfig
 from taken.models.project import ProjectConfig, ProjectSkillEntry
 from taken.models.registry import Registry, SkillSource
 from tests.fixtures.registry import RegistryEntryFactory
@@ -139,10 +139,9 @@ async def test_use__explicit_skill__copied_to_project_and_tracked(
     assert (dst / "helper.py").read_text() == "def foo(): pass"
     assert (dst / "subdir" / "extra.md").read_text() == "extra content"
 
-    assert (tmp_path / ".taken.yaml").exists()
+    assert not (tmp_path / ".taken.yaml").exists()
+    assert (taken_home / "projects.yaml").exists()
     project_config = read_project_config(tmp_path)
-    assert project_config.version == 1
-    assert project_config.skills_dir == ".agents/skills"
     assert "alice/my-skill" in project_config.skills
     skill_entry = project_config.skills["alice/my-skill"]
     assert skill_entry.copied_hash != ""
@@ -320,3 +319,222 @@ async def test_use__add_new_skill__existing_tracked_skills_preserved(
     assert "alice/skill-a" in project_config.skills
     assert "alice/skill-b" in project_config.skills
     assert project_config.skills["alice/skill-a"].copied_hash == "existing_hash"
+
+
+@pytest.fixture
+def registry_with_skill(
+    taken_home: Path,
+    scaffold_skill: Callable[[str, str], Path],
+) -> Path:
+    """Registry containing alice/my-skill; returns the registry skill directory."""
+    registry = Registry()
+    registry.add(RegistryEntryFactory.build(namespace="alice", name="my-skill", source=SkillSource.PERSONAL))
+    write_registry(registry, taken_home)
+    return scaffold_skill("alice", "my-skill")
+
+
+@pytest.mark.anyio
+async def test_use__default_symlink_mode__claude_dir_is_relative_symlink(
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    registry_with_skill: Path,
+) -> None:
+    # Arrange
+    write_config(sample_config)
+    monkeypatch.chdir(tmp_path)
+
+    # Act
+    result = cli_runner.invoke(app, ["use", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    main = tmp_path / ".agents" / "skills" / "my-skill"
+    mirror = tmp_path / ".claude" / "skills" / "my-skill"
+    assert mirror.is_symlink()
+    assert not mirror.readlink().is_absolute()
+    assert mirror.resolve() == main.resolve()
+    assert (mirror / "SKILL.md").read_text() == (registry_with_skill / "SKILL.md").read_text()
+
+
+@pytest.mark.anyio
+async def test_use__mode_copy_flag__claude_dir_is_real_copy_and_mode_remembered(
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    registry_with_skill: Path,
+) -> None:
+    # Arrange
+    write_config(sample_config)
+    monkeypatch.chdir(tmp_path)
+
+    # Act
+    result = cli_runner.invoke(app, ["use", "alice/my-skill", "--mode", "copy"])
+
+    # Assert
+    assert result.exit_code == 0
+    mirror = tmp_path / ".claude" / "skills" / "my-skill"
+    assert mirror.is_dir()
+    assert not mirror.is_symlink()
+    assert compute_skill_hash(mirror) == compute_skill_hash(registry_with_skill)
+    assert read_project_config(tmp_path).mirror_mode == MirrorMode.COPY
+
+
+@pytest.mark.anyio
+@pytest.mark.usefixtures("registry_with_skill")
+async def test_use__global_copy_mode__claude_dir_is_real_copy(
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    # Arrange
+    sample_config.skills.mirror_mode = MirrorMode.COPY
+    write_config(sample_config)
+    monkeypatch.chdir(tmp_path)
+
+    # Act
+    result = cli_runner.invoke(app, ["use", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    mirror = tmp_path / ".claude" / "skills" / "my-skill"
+    assert mirror.is_dir()
+    assert not mirror.is_symlink()
+    assert read_project_config(tmp_path).mirror_mode is None
+
+
+@pytest.mark.anyio
+@pytest.mark.usefixtures("registry_with_skill")
+async def test_use__custom_mirror_dirs__mirrors_to_each_dir(
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    # Arrange
+    sample_config.skills.mirror_dirs = [".claude/skills", ".cursor/skills"]
+    write_config(sample_config)
+    monkeypatch.chdir(tmp_path)
+
+    # Act
+    result = cli_runner.invoke(app, ["use", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert (tmp_path / ".claude" / "skills" / "my-skill").is_symlink()
+    assert (tmp_path / ".cursor" / "skills" / "my-skill").is_symlink()
+
+
+@pytest.mark.anyio
+@pytest.mark.usefixtures("registry_with_skill")
+async def test_use__symlink_fails__falls_back_to_copy_with_warning(
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    # Arrange
+    write_config(sample_config)
+    monkeypatch.chdir(tmp_path)
+
+    def _symlink_denied(*_args: object, **_kwargs: object) -> None:
+        raise OSError("symlinks not permitted")
+
+    monkeypatch.setattr(Path, "symlink_to", _symlink_denied)
+
+    # Act
+    result = cli_runner.invoke(app, ["use", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert "copied instead" in result.output
+    mirror = tmp_path / ".claude" / "skills" / "my-skill"
+    assert mirror.is_dir()
+    assert not mirror.is_symlink()
+
+
+@pytest.mark.anyio
+@pytest.mark.usefixtures("registry_with_skill")
+async def test_use__untracked_mirror_dir_exists_user_declines__skipped_and_preserved(
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    # Arrange — a hand-made .claude/skills/my-skill taken never created
+    write_config(sample_config)
+    monkeypatch.chdir(tmp_path)
+    foreign = tmp_path / ".claude" / "skills" / "my-skill"
+    foreign.mkdir(parents=True)
+    (foreign / "SKILL.md").write_text("# hand written")
+    monkeypatch.setattr("taken.commands.use.Confirm.ask", _confirm_no)
+
+    # Act
+    result = cli_runner.invoke(app, ["use", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert "not created by taken" in result.output
+    assert "Skipped" in result.output
+    assert (foreign / "SKILL.md").read_text() == "# hand written"
+    assert not (tmp_path / ".agents" / "skills" / "my-skill").exists()
+
+
+@pytest.mark.anyio
+@pytest.mark.usefixtures("registry_with_skill")
+async def test_use__copy_mode_mirror_edited__prompts_before_overwrite(
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    # Arrange — skill already used in copy mode, then edited only in .claude
+    sample_config.skills.mirror_mode = MirrorMode.COPY
+    write_config(sample_config)
+    monkeypatch.chdir(tmp_path)
+    cli_runner.invoke(app, ["use", "alice/my-skill"])
+    mirror = tmp_path / ".claude" / "skills" / "my-skill"
+    (mirror / "SKILL.md").write_text("# edited in claude dir")
+    monkeypatch.setattr("taken.commands.use.Confirm.ask", _confirm_no)
+
+    # Act
+    result = cli_runner.invoke(app, ["use", "alice/my-skill"])
+
+    # Assert
+    assert "local changes" in result.output
+    assert "Skipped" in result.output
+    assert (mirror / "SKILL.md").read_text() == "# edited in claude dir"
+
+
+@pytest.mark.anyio
+@pytest.mark.usefixtures("registry_with_skill")
+async def test_use__two_projects__tracked_separately_in_taken_home(
+    taken_home: Path,
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    # Arrange
+    write_config(sample_config)
+    project_a = tmp_path / "project-a"
+    project_b = tmp_path / "project-b"
+    project_a.mkdir()
+    project_b.mkdir()
+
+    # Act
+    monkeypatch.chdir(project_a)
+    cli_runner.invoke(app, ["use", "alice/my-skill"])
+    monkeypatch.chdir(project_b)
+    cli_runner.invoke(app, ["use", "alice/my-skill", "--mode", "copy"])
+
+    # Assert
+    state = read_projects_state(taken_home)
+    assert set(state.projects) == {str(project_a.resolve()), str(project_b.resolve())}
+    assert state.projects[str(project_a.resolve())].mirror_mode is None
+    assert state.projects[str(project_b.resolve())].mirror_mode == MirrorMode.COPY
+    assert not (project_a / ".taken.yaml").exists()
+    assert not (project_b / ".taken.yaml").exists()

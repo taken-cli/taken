@@ -11,7 +11,7 @@ from taken.core.hashing import compute_skill_hash
 from taken.core.project import read_project_config, write_project_config
 from taken.core.registry import read_registry, write_registry
 from taken.main import app
-from taken.models.config import TakenConfig
+from taken.models.config import MirrorMode, TakenConfig
 from taken.models.project import ProjectConfig, ProjectSkillEntry
 from taken.models.registry import Registry, SkillSource, VersionPin
 from tests.fixtures.registry import RegistryEntryFactory
@@ -777,3 +777,86 @@ async def test_update__taken_source_no_skill_folder_hash__skips_github(
     # Assert — no AssertionError, proceeds with local-only check
     assert result.exit_code == 0
     assert "Refreshed from GitHub" not in result.output
+
+
+@pytest.fixture
+def used_in_copy_mode(
+    taken_home: Path,
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    scaffold_registry_skill: Callable[[str, str], Path],
+) -> Path:
+    """alice/my-skill used into the project (cwd = tmp_path) in copy mode; returns the registry skill dir."""
+    sample_config.skills.mirror_mode = MirrorMode.COPY
+    write_config(sample_config)
+    registry = Registry()
+    registry.add(RegistryEntryFactory.build(namespace="alice", name="my-skill", source=SkillSource.PERSONAL))
+    write_registry(registry, taken_home)
+    registry_skill = scaffold_registry_skill("alice", "my-skill")
+    monkeypatch.chdir(tmp_path)
+    result = cli_runner.invoke(app, ["use", "alice/my-skill"])
+    assert result.exit_code == 0
+    return registry_skill
+
+
+@pytest.mark.anyio
+async def test_update__copy_mode_registry_changed__refreshes_every_copy(
+    cli_runner: CliRunner,
+    tmp_path: Path,
+    used_in_copy_mode: Path,
+) -> None:
+    # Arrange
+    (used_in_copy_mode / "SKILL.md").write_text("# new registry version")
+
+    # Act
+    result = cli_runner.invoke(app, ["update", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert "Skills Updated" in result.output
+    for d in (".agents", ".claude"):
+        assert (tmp_path / d / "skills" / "my-skill" / "SKILL.md").read_text() == "# new registry version"
+
+
+@pytest.mark.anyio
+@pytest.mark.usefixtures("used_in_copy_mode")
+async def test_update__copy_mode_only_mirror_edited__suggests_save(
+    cli_runner: CliRunner,
+    tmp_path: Path,
+) -> None:
+    # Arrange
+    mirror = tmp_path / ".claude" / "skills" / "my-skill"
+    (mirror / "SKILL.md").write_text("# edited in claude dir")
+
+    # Act
+    result = cli_runner.invoke(app, ["update", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert "taken save" in result.output
+    assert (mirror / "SKILL.md").read_text() == "# edited in claude dir"
+
+
+@pytest.mark.anyio
+async def test_update__copy_mode_mirror_edited_and_registry_changed_user_declines__skipped(
+    cli_runner: CliRunner,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    used_in_copy_mode: Path,
+) -> None:
+    # Arrange
+    (used_in_copy_mode / "SKILL.md").write_text("# new registry version")
+    mirror = tmp_path / ".claude" / "skills" / "my-skill"
+    (mirror / "SKILL.md").write_text("# edited in claude dir")
+    monkeypatch.setattr("taken.commands.update.Confirm.ask", _never_confirm)
+
+    # Act
+    result = cli_runner.invoke(app, ["update", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert "local changes" in result.output
+    assert "Skipped" in result.output
+    assert (mirror / "SKILL.md").read_text() == "# edited in claude dir"

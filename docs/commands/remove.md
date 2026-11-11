@@ -23,7 +23,7 @@ On confirmation:
 2. Removes the entry from `registry.yaml`
 3. Commits the change to `~/.taken/`
 
-**Project copies are not affected.** Skills already copied into `.agents/skills/` in your projects remain untouched — `taken remove` only affects the registry.
+**Project copies are not affected.** Skills already copied into your projects (`.agents/skills/`, `.claude/skills/`) remain untouched — `taken remove` only affects the registry.
 
 !!! warning
     This is irreversible unless you have pushed `~/.taken/` to a remote and can restore from there. For GitHub-installed skills, you can always reinstall with `taken install`.

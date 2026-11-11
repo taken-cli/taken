@@ -10,7 +10,7 @@ from taken.core import paths
 from taken.core.config import is_config_exists, write_config
 from taken.core.git import init_repo
 from taken.core.registry import write_registry
-from taken.models.config import TakenConfig
+from taken.models.config import MirrorMode, SkillsConfig, TakenConfig
 from taken.models.registry import Registry
 from taken.utils.console import console, err_console
 
@@ -70,6 +70,17 @@ def _resolve_username() -> str:
             )
             raise typer.Exit(code=1)
         return username
+
+
+def _resolve_mirror_mode(skills: SkillsConfig) -> MirrorMode:
+    """Ask how skills should be mirrored from the main skills dir into other agent dirs."""
+    mirrors = ", ".join(skills.mirror_dirs) or "other agent dirs"
+    console.print(f"\n[bold]How should skills be mirrored from {skills.main_dir} into {mirrors}?[/bold]")
+    console.print("  [cyan]1[/cyan]  Symlink  [dim](one real copy, mirrors always in sync)[/dim]")
+    console.print("  [cyan]2[/cyan]  Copy     [dim](independent copies in each dir)[/dim]")
+
+    choice = Prompt.ask("\nPick an option", choices=["1", "2"], default="1")
+    return MirrorMode.SYMLINK if choice == "1" else MirrorMode.COPY
 
 
 def _handle_existing_init() -> bool:
@@ -134,8 +145,10 @@ def init() -> None:
         if not should_proceed:
             raise typer.Exit(code=0)
 
-    # Resolve username
+    # Resolve username and mirror preference
     username = _resolve_username()
+    skills = SkillsConfig()
+    skills.mirror_mode = _resolve_mirror_mode(skills)
 
     # Create directory structure
     skills_dir = paths.TAKEN_HOME / "skills" / username
@@ -146,6 +159,7 @@ def init() -> None:
         username=username,
         taken_home=paths.TAKEN_HOME,
         initialized_at=datetime.now(),
+        skills=skills,
     )
     write_config(config)
 
@@ -162,7 +176,8 @@ def init() -> None:
     console.print(
         Panel(
             f"[green]✓[/green] Initialized at [bold]~/.taken/[/bold]\n"
-            f"[green]✓[/green] Username set to [bold]{username}[/bold]\n\n"
+            f"[green]✓[/green] Username set to [bold]{username}[/bold]\n"
+            f"[green]✓[/green] Mirror mode set to [bold]{skills.mirror_mode.value}[/bold]\n\n"
             f"[dim]Your personal skills namespace: [bold]{username}/<skill-name>[/bold][/dim]",
             title="[green]Taken Initialized[/green]",
             border_style="green",

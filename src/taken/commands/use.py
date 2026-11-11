@@ -12,11 +12,13 @@ from rich.panel import Panel
 from rich.prompt import Confirm
 
 from taken.core import paths
-from taken.core.config import is_config_exists
+from taken.core.config import is_config_exists, read_config
 from taken.core.hashing import compute_skill_hash
-from taken.core.project import read_project_config, write_project_config
+from taken.core.mirror import edited_copies, main_skill_dir, remove_path, sync_mirrors, untracked_paths
+from taken.core.project import read_project_config, resolve_layout, write_project_config
 from taken.core.registry import read_registry
-from taken.models.project import ProjectConfig, ProjectSkillEntry
+from taken.models.config import MirrorMode
+from taken.models.project import ProjectConfig, ProjectSkillEntry, SkillLayout
 from taken.models.registry import Registry, RegistryEntry
 from taken.utils.console import console, err_console
 
@@ -67,8 +69,14 @@ def use(
         None,
         help="Skill to copy into project, e.g. pradyothsp/hello-world. Omit for interactive picker.",
     ),
+    mode: MirrorMode | None = typer.Option(  # noqa: B008
+        None,
+        "--mode",
+        help="How to mirror into extra dirs like .claude/skills (symlink or copy). Remembered for this project.",
+        case_sensitive=False,
+    ),
 ) -> None:
-    """Copy skill(s) from ~/.taken/ into the current project's .agents/skills/ directory."""
+    """Copy skill(s) from ~/.taken/ into the current project's skills dir and mirror them to agent dirs."""
     if not is_config_exists(paths.TAKEN_HOME):
         err_console.print(
             Panel(
@@ -93,36 +101,35 @@ def use(
 
     selected = _resolve_selected(namespace_skill, registry)
 
-    project_config = read_project_config(Path.cwd())
-    agents_dir = Path.cwd() / project_config.skills_dir
-    agents_dir.mkdir(parents=True, exist_ok=True)
+    project_root = Path.cwd()
+    project_config = read_project_config(project_root)
+    if mode is not None:
+        project_config.mirror_mode = mode
+    layout = resolve_layout(read_config(paths.TAKEN_HOME), project_config)
 
     now = datetime.now()
     copied: list[str] = []
     skipped: list[str] = []
 
     for entry in selected:
-        dst = agents_dir / entry.name
-        existing = project_config.skills.get(entry.full_name)
+        if not _confirm_overwrite(entry, project_root, layout, project_config):
+            skipped.append(entry.full_name)
+            continue
 
-        if dst.exists() and existing is not None:
-            local_hash = compute_skill_hash(dst)
-            if local_hash != existing.copied_hash:
-                console.print(f"\n[yellow]⚠[/yellow]  [bold]{entry.name}[/bold] has local changes in your project.")
-                if not Confirm.ask(f"  Overwrite [bold]{entry.name}[/bold]?", default=False):
-                    skipped.append(entry.full_name)
-                    continue
-
-        _copy_skill(entry, dst, project_config, now)
-        copied.append(f"[green]✓[/green] [bold]{entry.full_name}[/bold] → {project_config.skills_dir}/{entry.name}/")
+        fell_back = _copy_skill(entry, project_root, layout, project_config, now)
+        copied.append(_describe_copy(entry, layout))
+        for dst in fell_back:
+            err_console.print(
+                f"[yellow]⚠[/yellow]  Could not symlink [bold]{dst.relative_to(project_root)}[/bold] — copied instead."
+            )
 
     if not copied and not skipped:
         return
 
-    write_project_config(project_config, Path.cwd())
+    write_project_config(project_config, project_root)
 
     if copied:
-        lines = "\n".join(copied) + "\n\n[dim]Tracked in .taken.yaml[/dim]"
+        lines = "\n".join(copied) + "\n\n[dim]Tracked in ~/.taken/projects.yaml[/dim]"
         console.print(
             Panel(
                 lines,
@@ -135,19 +142,57 @@ def use(
         console.print(f"[dim]Skipped: {', '.join(skipped)}[/dim]")
 
 
+def _confirm_overwrite(
+    entry: RegistryEntry,
+    project_root: Path,
+    layout: SkillLayout,
+    project_config: ProjectConfig,
+) -> bool:
+    """Ask before clobbering local edits or folders taken did not create. Returns True to proceed."""
+    existing = project_config.skills.get(entry.full_name)
+
+    if existing is not None:
+        if edited_copies(project_root, layout, entry.name, existing.copied_hash):
+            console.print(f"\n[yellow]⚠[/yellow]  [bold]{entry.name}[/bold] has local changes in your project.")
+            return Confirm.ask(f"  Overwrite [bold]{entry.name}[/bold]?", default=False)
+        return True
+
+    foreign = untracked_paths(project_root, layout, entry.name)
+    if foreign:
+        listed = ", ".join(str(p.relative_to(project_root)) for p in foreign)
+        console.print(f"\n[yellow]⚠[/yellow]  [bold]{listed}[/bold] already exists and was not created by taken.")
+        return Confirm.ask(f"  Overwrite with [bold]{entry.full_name}[/bold]?", default=False)
+
+    return True
+
+
+def _describe_copy(entry: RegistryEntry, layout: SkillLayout) -> str:
+    line = f"[green]✓[/green] [bold]{entry.full_name}[/bold] → {layout.main_dir}/{entry.name}/"
+    if layout.mirror_dirs:
+        verb = "linked" if layout.mirror_mode == MirrorMode.SYMLINK else "copied"
+        targets = ", ".join(f"{d}/{entry.name}/" for d in layout.mirror_dirs)
+        line += f"\n  [dim]{verb} to {targets}[/dim]"
+    return line
+
+
 def _copy_skill(
     entry: RegistryEntry,
-    dst: Path,
+    project_root: Path,
+    layout: SkillLayout,
     project_config: ProjectConfig,
     now: datetime,
-) -> None:
+) -> list[Path]:
+    """Copy registry skill into the main dir, then mirror it. Returns mirrors that fell back to copy."""
     src = paths.TAKEN_HOME / "skills" / entry.namespace / entry.name
+    dst = main_skill_dir(project_root, layout, entry.name)
 
-    if dst.exists():
-        shutil.rmtree(dst)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    remove_path(dst)
     shutil.copytree(src, dst)
+    fell_back = sync_mirrors(project_root, layout, entry.name)
 
     project_config.skills[entry.full_name] = ProjectSkillEntry(
         copied_at=now,
         copied_hash=compute_skill_hash(dst),
     )
+    return fell_back

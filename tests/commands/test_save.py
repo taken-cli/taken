@@ -10,7 +10,7 @@ from taken.core.hashing import compute_skill_hash
 from taken.core.project import read_project_config, write_project_config
 from taken.core.registry import read_registry, write_registry
 from taken.main import app
-from taken.models.config import TakenConfig
+from taken.models.config import MirrorMode, TakenConfig
 from taken.models.project import ProjectConfig, ProjectSkillEntry
 from taken.models.registry import Registry, SkillSource
 from tests.fixtures.registry import RegistryEntryFactory
@@ -355,3 +355,129 @@ async def test_save__skill_not_in_registry__still_saves_files(
     assert "Skills Saved" in result.output
     registry_skill_dir = taken_home / "skills" / "alice" / "my-skill"
     assert (registry_skill_dir / "SKILL.md").read_text() == "# my-skill\nedited"
+
+
+@pytest.fixture
+def used_in_copy_mode(
+    taken_home: Path,
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    scaffold_registry_skill: Callable[[str, str], Path],
+) -> Path:
+    """alice/my-skill used into the project (cwd = tmp_path) in copy mode; returns the registry skill dir."""
+    sample_config.skills.mirror_mode = MirrorMode.COPY
+    write_config(sample_config)
+    registry = Registry()
+    registry.add(RegistryEntryFactory.build(namespace="alice", name="my-skill", source=SkillSource.PERSONAL))
+    write_registry(registry, taken_home)
+    registry_skill = scaffold_registry_skill("alice", "my-skill")
+    monkeypatch.chdir(tmp_path)
+    result = cli_runner.invoke(app, ["use", "alice/my-skill"])
+    assert result.exit_code == 0
+    return registry_skill
+
+
+@pytest.mark.anyio
+async def test_save__copy_mode_only_mirror_edited__saves_mirror_and_syncs_main(
+    cli_runner: CliRunner,
+    tmp_path: Path,
+    used_in_copy_mode: Path,
+) -> None:
+    # Arrange
+    main = tmp_path / ".agents" / "skills" / "my-skill"
+    mirror = tmp_path / ".claude" / "skills" / "my-skill"
+    (mirror / "SKILL.md").write_text("# edited in claude dir")
+
+    # Act
+    result = cli_runner.invoke(app, ["save", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert "Skills Saved" in result.output
+    assert (used_in_copy_mode / "SKILL.md").read_text() == "# edited in claude dir"
+    assert (main / "SKILL.md").read_text() == "# edited in claude dir"
+    assert read_project_config(tmp_path).skills["alice/my-skill"].copied_hash == compute_skill_hash(main)
+
+
+@pytest.mark.anyio
+async def test_save__copy_mode_both_edited_same__saves_without_prompt(
+    cli_runner: CliRunner,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    used_in_copy_mode: Path,
+) -> None:
+    # Arrange
+    for d in (".agents", ".claude"):
+        (tmp_path / d / "skills" / "my-skill" / "SKILL.md").write_text("# same edit")
+
+    def _prompt_not_expected(*_args: object, **_kwargs: object) -> str:
+        raise AssertionError("should not prompt")
+
+    monkeypatch.setattr("taken.commands.save.Prompt.ask", _prompt_not_expected)
+
+    # Act
+    result = cli_runner.invoke(app, ["save", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert (used_in_copy_mode / "SKILL.md").read_text() == "# same edit"
+
+
+@pytest.mark.anyio
+async def test_save__copy_mode_both_edited_differently__user_picks_copy(
+    cli_runner: CliRunner,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    used_in_copy_mode: Path,
+) -> None:
+    # Arrange
+    main = tmp_path / ".agents" / "skills" / "my-skill"
+    mirror = tmp_path / ".claude" / "skills" / "my-skill"
+    (main / "SKILL.md").write_text("# agents edit")
+    (mirror / "SKILL.md").write_text("# claude edit")
+
+    def _pick_second(*_args: object, **_kwargs: object) -> str:
+        return "2"
+
+    monkeypatch.setattr("taken.commands.save.Prompt.ask", _pick_second)
+
+    # Act
+    result = cli_runner.invoke(app, ["save", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert "edited differently" in result.output
+    assert (used_in_copy_mode / "SKILL.md").read_text() == "# claude edit"
+    assert (main / "SKILL.md").read_text() == "# claude edit"
+    assert (mirror / "SKILL.md").read_text() == "# claude edit"
+
+
+@pytest.mark.anyio
+async def test_save__symlink_mode_edit_through_link__saved_from_main(
+    taken_home: Path,
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    scaffold_registry_skill: Callable[[str, str], Path],
+) -> None:
+    # Arrange — default symlink mode; edit via the .claude link
+    write_config(sample_config)
+    registry = Registry()
+    registry.add(RegistryEntryFactory.build(namespace="alice", name="my-skill", source=SkillSource.PERSONAL))
+    write_registry(registry, taken_home)
+    registry_skill = scaffold_registry_skill("alice", "my-skill")
+    monkeypatch.chdir(tmp_path)
+    cli_runner.invoke(app, ["use", "alice/my-skill"])
+    mirror = tmp_path / ".claude" / "skills" / "my-skill"
+    (mirror / "SKILL.md").write_text("# edited via link")
+
+    # Act
+    result = cli_runner.invoke(app, ["save", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert (registry_skill / "SKILL.md").read_text() == "# edited via link"
+    assert mirror.is_symlink()

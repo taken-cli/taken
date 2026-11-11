@@ -29,7 +29,7 @@ async def test_init__fresh_init__git_init_and_initial_commit_issued(
 
     # Act
     with patch("taken.core.git._run", return_value=_mock_run_ok()) as mock_run:
-        result = cli_runner.invoke(app, ["init"], input="1\n")
+        result = cli_runner.invoke(app, ["init"], input="1\n1\n")
 
     # Assert
     assert result.exit_code == 0
@@ -51,7 +51,7 @@ async def test_init__reinit__reinit_commit_issued_without_git_init(
 
     # Act
     with patch("taken.core.git._run", return_value=_mock_run_ok()) as mock_run:
-        result = cli_runner.invoke(app, ["init"], input="y\n1\n1\n")
+        result = cli_runner.invoke(app, ["init"], input="y\n1\n1\n1\n")
 
     # Assert
     assert result.exit_code == 0

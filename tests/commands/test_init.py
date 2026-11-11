@@ -21,7 +21,7 @@ async def test_init__fresh_start__creates_config_and_registry(
     # Arrange — taken_home patched via autouse fixture in conftest
 
     # Act
-    result = cli_runner.invoke(app, ["init"], input="1\n")
+    result = cli_runner.invoke(app, ["init"], input="1\n1\n")
 
     # Assert
     assert result.exit_code == 0
@@ -37,7 +37,7 @@ async def test_init__config_roundtrip__values_readable_after_write(
     # Arrange — taken_home patched via autouse fixture in conftest
 
     # Act
-    result = cli_runner.invoke(app, ["init"], input="1\n")
+    result = cli_runner.invoke(app, ["init"], input="1\n1\n")
 
     # Assert
     assert result.exit_code == 0
@@ -54,7 +54,7 @@ async def test_init__fresh_start__registry_is_empty(
     # Arrange — taken_home patched via autouse fixture in conftest
 
     # Act
-    cli_runner.invoke(app, ["init"], input="1\n")
+    cli_runner.invoke(app, ["init"], input="1\n1\n")
 
     # Assert
     registry = read_registry(taken_home)
@@ -69,7 +69,7 @@ async def test_init__fresh_start__creates_skills_directory(
     # Arrange — taken_home patched via autouse fixture in conftest
 
     # Act
-    cli_runner.invoke(app, ["init"], input="1\n")
+    cli_runner.invoke(app, ["init"], input="1\n1\n")
 
     # Assert
     username = getpass.getuser()
@@ -109,7 +109,7 @@ async def test_init__already_initialized_reset_config__registry_preserved(
     write_registry(registry, taken_home)
 
     # Act — reinit → reset config only → pick system username
-    result = cli_runner.invoke(app, ["init"], input="y\n1\n1\n")
+    result = cli_runner.invoke(app, ["init"], input="y\n1\n1\n1\n")
 
     # Assert
     assert result.exit_code == 0
@@ -132,7 +132,7 @@ async def test_init__already_initialized_full_wipe_confirmed__registry_cleared(
     (taken_home / "skills").mkdir(parents=True, exist_ok=True)
 
     # Act — reinit → full wipe → confirm → pick system username
-    result = cli_runner.invoke(app, ["init"], input="y\n2\ny\n1\n")
+    result = cli_runner.invoke(app, ["init"], input="y\n2\ny\n1\n1\n")
 
     # Assert
     assert result.exit_code == 0
@@ -175,7 +175,7 @@ async def test_init__config_reset_with_existing_registry__all_entries_preserved(
     write_registry(registry, taken_home)
 
     # Act — reinit → reset config only → pick system username
-    result = cli_runner.invoke(app, ["init"], input="y\n1\n1\n")
+    result = cli_runner.invoke(app, ["init"], input="y\n1\n1\n1\n")
 
     # Assert
     assert result.exit_code == 0
@@ -200,7 +200,7 @@ async def test_init__manual_username_entry__config_stores_custom_username(
     monkeypatch.setattr("subprocess.run", _no_git)
 
     # Act — "2" → manual entry, then type "myname"
-    result = cli_runner.invoke(app, ["init"], input="2\nmyname\n")
+    result = cli_runner.invoke(app, ["init"], input="2\nmyname\n1\n")
 
     # Assert
     assert result.exit_code == 0

@@ -4,7 +4,7 @@ from typing import Any, cast
 
 from ruamel.yaml import YAML
 
-from taken.models.config import GitConfig, TakenConfig
+from taken.models.config import GitConfig, MirrorMode, SkillsConfig, TakenConfig
 
 _yaml: Any = YAML()
 _yaml.default_flow_style = False
@@ -34,6 +34,11 @@ def write_config(config: TakenConfig) -> None:
             "auto_commit": config.git.auto_commit,
             "auto_push": config.git.auto_push,
         },
+        "skills": {
+            "main_dir": config.skills.main_dir,
+            "mirror_dirs": list(config.skills.mirror_dirs),
+            "mirror_mode": config.skills.mirror_mode.value,
+        },
     }
 
     with path.open("w", encoding="utf-8") as f:
@@ -62,12 +67,22 @@ def read_config(taken_home: Path | None = None) -> TakenConfig:
         auto_push=raw_git.get("auto_push", True),
     )
 
+    defaults = SkillsConfig()
+    raw_skills: dict[str, Any] = data.get("skills") or {}
+    raw_mirror_dirs = raw_skills.get("mirror_dirs")
+    skills = SkillsConfig(
+        main_dir=raw_skills.get("main_dir", defaults.main_dir),
+        mirror_dirs=list(raw_mirror_dirs) if raw_mirror_dirs is not None else defaults.mirror_dirs,
+        mirror_mode=MirrorMode(raw_skills.get("mirror_mode", defaults.mirror_mode)),
+    )
+
     return TakenConfig(
         version=data.get("version", "1"),
         username=data["username"],
         taken_home=Path(data.get("taken_home", str(home))),
         initialized_at=data.get("initialized_at") or datetime.now(),
         git=git,
+        skills=skills,
     )
 
 

@@ -51,7 +51,7 @@ Interactive fuzzy picker when multiple skills are found.
 ```bash
 taken use
 ```
-Fuzzy-picks from your registry and copies the skill into `.agents/skills/` in the current project.
+Fuzzy-picks from your registry, copies the skill into `.agents/skills/` in the current project, and mirrors it into `.claude/skills/` (symlink or copy).
 
 **6. Push edits back to registry**
 ```bash

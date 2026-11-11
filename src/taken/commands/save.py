@@ -9,14 +9,16 @@ from InquirerPy.enum import (
     INQUIRERPY_FILL_CIRCLE_SEQUENCE,
 )
 from rich.panel import Panel
+from rich.prompt import Prompt
 
 from taken.core import paths
-from taken.core.config import is_config_exists
+from taken.core.config import is_config_exists, read_config
 from taken.core.git import auto_commit_and_push
 from taken.core.hashing import compute_skill_hash
-from taken.core.project import is_project_config_exists, read_project_config, write_project_config
+from taken.core.mirror import edited_copies, main_skill_dir, remove_path, sync_mirrors
+from taken.core.project import is_project_config_exists, read_project_config, resolve_layout, write_project_config
 from taken.core.registry import read_registry, write_registry
-from taken.models.project import ProjectConfig, ProjectSkillEntry
+from taken.models.project import ProjectConfig, ProjectSkillEntry, SkillLayout
 from taken.models.registry import Registry
 from taken.utils.console import console, err_console
 
@@ -58,9 +60,27 @@ def _resolve_selected(
     return selected
 
 
+def _pick_source(name: str, edited: list[Path], project_root: Path) -> Path:
+    """Choose which edited copy to save. Asks only when copies were edited differently."""
+    hashes = {compute_skill_hash(p) for p in edited}
+    if len(hashes) == 1:
+        return edited[0]
+
+    console.print(f"\n[yellow]⚠[/yellow]  [bold]{name}[/bold] was edited differently in more than one place:")
+    for i, path in enumerate(edited, start=1):
+        console.print(f"  [cyan]{i}[/cyan]  {path.relative_to(project_root)}")
+    choice = Prompt.ask(
+        "  Which copy should be saved?",
+        choices=[str(i) for i in range(1, len(edited) + 1)],
+        default="1",
+    )
+    return edited[int(choice) - 1]
+
+
 def _process_skill(
     full_name: str,
     project_config: ProjectConfig,
+    layout: SkillLayout,
     registry: Registry,
     now: datetime,
     saved: list[str],
@@ -68,19 +88,28 @@ def _process_skill(
     no_changes: list[str],
 ) -> None:
     namespace, name = full_name.split("/", 1)
-    project_skill_dir = Path.cwd() / project_config.skills_dir / name
+    project_root = Path.cwd()
+    project_skill_dir = main_skill_dir(project_root, layout, name)
     registry_skill_dir = paths.TAKEN_HOME / "skills" / namespace / name
 
     existing = project_config.skills[full_name]
-    live_hash = compute_skill_hash(project_skill_dir)
+    edited = edited_copies(project_root, layout, name, existing.copied_hash)
 
-    if live_hash == existing.copied_hash:
+    if not edited:
         no_changes.append(full_name)
         return
 
+    source = _pick_source(name, edited, project_root)
+
     if registry_skill_dir.exists():
         shutil.rmtree(registry_skill_dir)
-    shutil.copytree(project_skill_dir, registry_skill_dir)
+    shutil.copytree(source, registry_skill_dir)
+
+    # Bring every project copy in line with what was saved.
+    if source != project_skill_dir:
+        remove_path(project_skill_dir)
+        shutil.copytree(source, project_skill_dir)
+    sync_mirrors(project_root, layout, name)
 
     new_hash = compute_skill_hash(registry_skill_dir)
     project_config.skills[full_name] = ProjectSkillEntry(
@@ -92,7 +121,10 @@ def _process_skill(
     if registry_entry is not None:
         registry_entry.updated_at = now
 
-    saved.append(f"[green]✓[/green] [bold]{full_name}[/bold] → ~/.taken/skills/{namespace}/{name}/")
+    saved.append(
+        f"[green]✓[/green] [bold]{full_name}[/bold] ({source.relative_to(project_root)}) → "
+        f"~/.taken/skills/{namespace}/{name}/"
+    )
     saved_names.append(full_name)
 
 
@@ -116,7 +148,7 @@ def save(
     if not is_project_config_exists(Path.cwd()):
         err_console.print(
             Panel(
-                "No [bold].taken.yaml[/bold] found in the current directory.\n"
+                "This directory is not tracked by taken yet.\n"
                 "Run [bold]taken use[/bold] to add skills to this project first.",
                 title="[red]Not a Taken Project[/red]",
                 border_style="red",
@@ -136,6 +168,7 @@ def save(
         )
         raise typer.Exit(code=1)
 
+    layout = resolve_layout(read_config(paths.TAKEN_HOME), project_config)
     selected = _resolve_selected(namespace_skill, project_config)
     registry = read_registry(paths.TAKEN_HOME)
 
@@ -145,7 +178,7 @@ def save(
     no_changes: list[str] = []
 
     for full_name in selected:
-        _process_skill(full_name, project_config, registry, now, saved, saved_names, no_changes)
+        _process_skill(full_name, project_config, layout, registry, now, saved, saved_names, no_changes)
 
     if not saved and not no_changes:
         return
@@ -155,7 +188,7 @@ def save(
         write_registry(registry, paths.TAKEN_HOME)
         auto_commit_and_push(paths.TAKEN_HOME, f"save: {' '.join(saved_names)}")
 
-        lines = "\n".join(saved) + "\n\n[dim]Registry and .taken.yaml updated[/dim]"
+        lines = "\n".join(saved) + "\n\n[dim]Registry and ~/.taken/projects.yaml updated[/dim]"
         console.print(
             Panel(
                 lines,
