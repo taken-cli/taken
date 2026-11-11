@@ -18,7 +18,13 @@ from taken.core.git import auto_commit_and_push
 from taken.core.github import discover_skills, download_skill, get_commit_sha, get_default_branch
 from taken.core.hashing import compute_skill_hash
 from taken.core.mirror import edited_copies, main_skill_dir, remove_path, sync_mirrors
-from taken.core.project import is_project_config_exists, read_project_config, resolve_layout, write_project_config
+from taken.core.project import (
+    is_project_config_exists,
+    read_project_config,
+    resolve_layout,
+    skill_layout,
+    write_project_config,
+)
 from taken.core.registry import read_registry, write_registry
 from taken.models.project import ProjectConfig, ProjectSkillEntry, SkillLayout
 from taken.models.registry import Registry, RegistryEntry, SkillSource, VersionPin
@@ -148,6 +154,7 @@ def _process_skill(
         raise typer.Exit(code=1)
 
     existing = project_config.skills[full_name]
+    layout = skill_layout(layout, existing)
     registry_hash = compute_skill_hash(registry_skill_dir)
     registry_changed = registry_hash != existing.copied_hash
     project_edited = bool(edited_copies(project_root, layout, name, existing.copied_hash))
@@ -169,15 +176,18 @@ def _process_skill(
     project_skill_dir.parent.mkdir(parents=True, exist_ok=True)
     remove_path(project_skill_dir)
     shutil.copytree(registry_skill_dir, project_skill_dir)
-    for dst in sync_mirrors(project_root, layout, name):
-        err_console.print(
-            f"[yellow]⚠[/yellow]  Could not symlink [bold]{dst.relative_to(project_root)}[/bold] — copied instead."
-        )
+    for result in sync_mirrors(project_root, layout, name):
+        if result.fell_back:
+            err_console.print(
+                f"[yellow]⚠[/yellow]  Could not symlink [bold]{result.path.relative_to(project_root)}[/bold] "
+                "— copied instead."
+            )
 
     new_hash = compute_skill_hash(project_skill_dir)
     project_config.skills[full_name] = ProjectSkillEntry(
         copied_at=existing.copied_at,
         copied_hash=new_hash,
+        mirror_dirs=existing.mirror_dirs,
     )
 
     updated.append(f"[green]✓[/green] [bold]{full_name}[/bold] → {layout.main_dir}/{name}/")

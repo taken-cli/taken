@@ -7,6 +7,7 @@ from taken.commands.git import git
 from taken.commands.init import init
 from taken.commands.install import install
 from taken.commands.list import list as list_cmd
+from taken.commands.mirrors import mirrors_app
 from taken.commands.remove import remove
 from taken.commands.save import save
 from taken.commands.update import update
@@ -49,6 +50,7 @@ app.command("use")(use)
 app.command("save")(save)
 app.command("update")(update)
 app.command("remove")(remove)
+app.add_typer(mirrors_app, name="mirrors")
 app.command("git", context_settings={"allow_extra_args": True, "ignore_unknown_options": True})(git)
 
 

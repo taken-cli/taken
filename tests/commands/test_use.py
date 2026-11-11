@@ -450,7 +450,7 @@ async def test_use__symlink_fails__falls_back_to_copy_with_warning(
 
     # Assert
     assert result.exit_code == 0
-    assert "copied instead" in result.output
+    assert "symlink not permitted" in result.output
     mirror = tmp_path / ".claude" / "skills" / "my-skill"
     assert mirror.is_dir()
     assert not mirror.is_symlink()
@@ -538,3 +538,124 @@ async def test_use__two_projects__tracked_separately_in_taken_home(
     assert state.projects[str(project_b.resolve())].mirror_mode == MirrorMode.COPY
     assert not (project_a / ".taken.yaml").exists()
     assert not (project_b / ".taken.yaml").exists()
+
+
+class _FakePrompt:
+    def __init__(self, answer: list[str]) -> None:
+        self.answer = answer
+
+    def execute(self) -> list[str]:
+        return self.answer
+
+
+def _fake_checkbox(answer: list[str], captured: dict[str, object]) -> Callable[..., _FakePrompt]:
+    def _inner(**kwargs: object) -> _FakePrompt:
+        captured.update(kwargs)
+        return _FakePrompt(answer)
+
+    return _inner
+
+
+def _always_interactive() -> bool:
+    return True
+
+
+@pytest.mark.anyio
+@pytest.mark.usefixtures("registry_with_skill")
+async def test_use__interactive_picker__links_only_chosen_dirs_and_shows_them(
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    # Arrange
+    sample_config.skills.mirror_dirs = [".claude/skills", ".cursor/skills"]
+    write_config(sample_config)
+    monkeypatch.chdir(tmp_path)
+    captured: dict[str, object] = {}
+    monkeypatch.setattr("taken.commands.use._is_interactive", _always_interactive)
+    monkeypatch.setattr("taken.commands.use.inquirer.checkbox", _fake_checkbox([".cursor/skills"], captured))
+
+    # Act
+    result = cli_runner.invoke(app, ["use", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert [c.enabled for c in captured["choices"]] == [True, True]  # type: ignore[attr-defined]
+    assert (tmp_path / ".cursor" / "skills" / "my-skill").is_symlink()
+    assert not (tmp_path / ".claude" / "skills" / "my-skill").exists()
+    assert "🔗 .cursor/skills/my-skill" in result.output
+    assert read_project_config(tmp_path).skills["alice/my-skill"].mirror_dirs == [".cursor/skills"]
+
+
+@pytest.mark.anyio
+@pytest.mark.usefixtures("registry_with_skill")
+async def test_use__reuse_and_untick_dir__preselects_previous_and_removes_link(
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    # Arrange — first use links into .claude only
+    sample_config.skills.mirror_dirs = [".claude/skills", ".cursor/skills"]
+    write_config(sample_config)
+    monkeypatch.chdir(tmp_path)
+    cli_runner.invoke(app, ["use", "alice/my-skill", "--mirror", ".claude/skills"])
+    captured: dict[str, object] = {}
+    monkeypatch.setattr("taken.commands.use._is_interactive", _always_interactive)
+    monkeypatch.setattr("taken.commands.use.inquirer.checkbox", _fake_checkbox([".cursor/skills"], captured))
+
+    # Act
+    result = cli_runner.invoke(app, ["use", "alice/my-skill"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert [c.enabled for c in captured["choices"]] == [True, False]  # type: ignore[attr-defined]
+    assert not (tmp_path / ".claude" / "skills" / "my-skill").exists()
+    assert (tmp_path / ".cursor" / "skills" / "my-skill").is_symlink()
+    assert "removed .claude/skills/my-skill" in result.output
+
+
+@pytest.mark.anyio
+@pytest.mark.usefixtures("registry_with_skill")
+async def test_use__no_mirror_flag__only_main_copy(
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    # Arrange
+    write_config(sample_config)
+    monkeypatch.chdir(tmp_path)
+
+    # Act
+    result = cli_runner.invoke(app, ["use", "alice/my-skill", "--no-mirror"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert (tmp_path / ".agents" / "skills" / "my-skill").is_dir()
+    assert not (tmp_path / ".claude").exists()
+    assert "not mirrored" in result.output
+    assert read_project_config(tmp_path).skills["alice/my-skill"].mirror_dirs == []
+
+
+@pytest.mark.anyio
+@pytest.mark.usefixtures("registry_with_skill")
+async def test_use__mirror_flag_not_in_list__exits_with_error(
+    cli_runner: CliRunner,
+    sample_config: TakenConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    # Arrange
+    write_config(sample_config)
+    monkeypatch.chdir(tmp_path)
+
+    # Act
+    result = cli_runner.invoke(app, ["use", "alice/my-skill", "--mirror", ".cursor/skills/"])
+
+    # Assert
+    assert result.exit_code == 1
+    assert "Unknown Mirror Dir" in result.output
+    assert "taken mirrors add .cursor/skills" in result.output
+    assert not (tmp_path / ".agents").exists()

@@ -65,7 +65,7 @@ Interactive fuzzy picker when multiple skills are found. Key flags:
 ```bash
 taken use
 ```
-Fuzzy-picks from your registry, copies the skill into `.agents/skills/` in the current project, and mirrors it into `.claude/skills/` (symlink or copy, your choice). Tracking lives in `~/.taken/projects.yaml` — nothing taken-specific is written into the project.
+Fuzzy-picks from your registry, copies the skill into `.agents/skills/` in the current project, and asks which agent folders (`.claude/skills/`, `.cursor/skills/`, ...) to symlink or copy it into, then shows every link it made. Tracking lives in `~/.taken/projects.yaml` — nothing taken-specific is written into the project.
 
 **6. Push edits back to registry**
 ```bash
@@ -94,6 +94,7 @@ Re-copies the latest registry version into the project. Warns before overwriting
 | `taken update [namespace/skill]` | Re-copy latest registry version into project |
 | `taken list` | Show all skills in the registry |
 | `taken remove <namespace/skill>` | Remove a skill from registry |
+| `taken mirrors list\|add\|remove` | Manage the agent folders `taken use` links into |
 | `taken git <args>` | Run any git command inside `~/.taken/` |
 
 ---

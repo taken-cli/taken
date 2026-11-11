@@ -54,13 +54,17 @@ def _serialize_project(config: ProjectConfig) -> dict[str, Any]:
     data: dict[str, Any] = {}
     if config.mirror_mode is not None:
         data["mirror_mode"] = config.mirror_mode.value
-    data["skills"] = {
-        key: {
-            "copied_at": entry.copied_at.isoformat(),
-            "copied_hash": entry.copied_hash,
-        }
-        for key, entry in config.skills.items()
+    data["skills"] = {key: _serialize_skill(entry) for key, entry in config.skills.items()}
+    return data
+
+
+def _serialize_skill(entry: ProjectSkillEntry) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "copied_at": entry.copied_at.isoformat(),
+        "copied_hash": entry.copied_hash,
     }
+    if entry.mirror_dirs is not None:
+        data["mirror_dirs"] = list(entry.mirror_dirs)
     return data
 
 
@@ -73,6 +77,7 @@ def _deserialize_project(data: dict[str, Any]) -> ProjectConfig:
             key: ProjectSkillEntry(
                 copied_at=datetime.fromisoformat(entry["copied_at"]),
                 copied_hash=entry.get("copied_hash", ""),
+                mirror_dirs=list(entry["mirror_dirs"]) if entry.get("mirror_dirs") is not None else None,
             )
             for key, entry in raw_skills.items()
         },
@@ -138,3 +143,10 @@ def resolve_layout(config: TakenConfig, project_config: ProjectConfig) -> SkillL
         mirror_dirs=tuple(config.skills.mirror_dirs),
         mirror_mode=project_config.mirror_mode or config.skills.mirror_mode,
     )
+
+
+def skill_layout(layout: SkillLayout, entry: ProjectSkillEntry | None) -> SkillLayout:
+    """Narrow a project layout to the mirror dirs chosen for one skill (if it has a saved choice)."""
+    if entry is None or entry.mirror_dirs is None:
+        return layout
+    return layout.model_copy(update={"mirror_dirs": tuple(entry.mirror_dirs)})
