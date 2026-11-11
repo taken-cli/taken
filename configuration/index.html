@@ -561,6 +561,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../commands/mirrors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    taken mirrors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../commands/git/" class="md-nav__link">
         
   
@@ -831,7 +859,7 @@
 </tr>
 <tr>
 <td><code>skills.mirror_dirs</code></td>
-<td>Extra dirs that mirror the main one. Defaults to <code>[.claude/skills]</code>. Add e.g. <code>.cursor/skills</code> to mirror there too.</td>
+<td>Mirror folders offered by <code>taken use</code>. Defaults to <code>[.claude/skills]</code>. Manage with <a href="../commands/mirrors/"><code>taken mirrors</code></a>.</td>
 </tr>
 <tr>
 <td><code>skills.mirror_mode</code></td>
@@ -840,7 +868,7 @@
 </tbody>
 </table>
 <h2 id="projectsyaml">projects.yaml</h2>
-<p><code>~/.taken/projects.yaml</code> records which registry skills you copied into which project, keyed by absolute project path, along with a content hash used to detect local edits and any per-project <code>mirror_mode</code> override. It is written by <code>use</code>, <code>save</code> and <code>update</code>.</p>
+<p><code>~/.taken/projects.yaml</code> records which registry skills you copied into which project, keyed by absolute project path, along with a content hash used to detect local edits, the mirror folders chosen for each skill, and any per-project <code>mirror_mode</code> override. It is written by <code>use</code>, <code>save</code> and <code>update</code>.</p>
 <p>It is machine-local, so taken adds it to <code>~/.taken/.gitignore</code> and it is never committed or pushed. Nothing taken-specific is written inside your projects.</p>
 
 

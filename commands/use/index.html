@@ -507,6 +507,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#choosing-mirror-folders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing mirror folders
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mirror-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -667,6 +678,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../mirrors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    taken mirrors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../git/" class="md-nav__link">
         
   
@@ -771,6 +810,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#choosing-mirror-folders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing mirror folders
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mirror-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -829,15 +879,36 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>taken<span class="w"> </span>use<span class="w">                              </span><span class="c1"># interactive fuzzy picker</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>taken<span class="w"> </span>use<span class="w"> </span>&lt;namespace/skill&gt;<span class="w">            </span><span class="c1"># direct, non-interactive</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>taken<span class="w"> </span>use<span class="w"> </span>&lt;namespace/skill&gt;<span class="w"> </span>--mode<span class="w"> </span>copy<span class="w">   </span><span class="c1"># override mirror mode for this project (remembered)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>taken<span class="w"> </span>use<span class="w"> </span>&lt;namespace/skill&gt;<span class="w"> </span>-m<span class="w"> </span>.cursor/skills<span class="w">   </span><span class="c1"># pick mirror folders without the prompt (repeatable)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>taken<span class="w"> </span>use<span class="w"> </span>&lt;namespace/skill&gt;<span class="w"> </span>--no-mirror<span class="w">         </span><span class="c1"># main copy only, no mirrors</span>
 </code></pre></div>
 <h2 id="behavior">Behavior</h2>
 <ol>
 <li>If no argument is given, shows a fuzzy picker over your full registry (space/tab to select multiple, enter to confirm)</li>
 <li>Copies the skill folder into the main skills dir — <code>.agents/skills/&lt;skill-name&gt;/</code> by default</li>
-<li>Mirrors it into each mirror dir — <code>.claude/skills/&lt;skill-name&gt;/</code> by default — as a relative symlink or a full copy</li>
-<li>Records the copy in <code>~/.taken/projects.yaml</code>, keyed by the project path</li>
+<li>Asks which mirror folders to link it into (see below)</li>
+<li>Mirrors it into each chosen folder as a relative symlink or a full copy, and prints every link it made</li>
+<li>Records the copy and the chosen folders in <code>~/.taken/projects.yaml</code>, keyed by the project path</li>
 </ol>
 <p>Nothing taken-specific is written into the project — only the skill folders themselves. Tracking is personal and lives in <code>~/.taken/</code>.</p>
+<h2 id="choosing-mirror-folders">Choosing mirror folders</h2>
+<p>Every <code>taken use</code> shows a checkbox list of your mirror folders:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>? Symlink into which folders? (space to toggle, enter to confirm — none is fine)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>❯ ◉ .claude/skills
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  ◉ .cursor/skills
+</code></pre></div>
+<ul>
+<li>For a new skill, every folder is ticked. For a skill already in the project, the folders it used last time are ticked.</li>
+<li>The choice is saved per skill, so <code>taken update</code> and <code>taken save</code> keep using the same folders.</li>
+<li>Unticking a folder removes taken's link (or unedited copy) for that skill there. Anything you edited, or that taken didn't create, is left alone.</li>
+<li><code>--mirror</code> / <code>-m</code> and <code>--no-mirror</code> skip the prompt. When there's no terminal (scripts, CI), it also skips the prompt and uses the same defaults.</li>
+</ul>
+<p>The list of folders is managed with <a href="../mirrors/"><code>taken mirrors</code></a>.</p>
+<p>The output shows exactly where each skill went:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>✓ me/my-skill → .agents/skills/my-skill/
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  🔗 .claude/skills/my-skill → .agents/skills/my-skill
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  🔗 .cursor/skills/my-skill → .agents/skills/my-skill
+</code></pre></div>
 <h2 id="mirror-mode">Mirror mode</h2>
 <table>
 <thead>
@@ -860,18 +931,19 @@
 <p>The default comes from <code>skills.mirror_mode</code> in <a href="../../configuration/"><code>config.yaml</code></a> (chosen during <code>taken init</code>). <code>--mode</code> overrides it for the current project and is remembered for later commands. If a symlink cannot be created (e.g. on Windows without the right permissions), taken falls back to a copy and warns.</p>
 <h2 id="overwrite-protection">Overwrite protection</h2>
 <p>If a skill already exists in the project and you've modified any of its copies, taken detects the change by comparing file hashes and prompts before overwriting:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>⚠  my-skill has local changes in your project.
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  Overwrite my-skill? [y/N]
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>⚠  my-skill has local changes in your project.
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  Overwrite my-skill? [y/N]
 </code></pre></div>
 <p>If a mirror location (e.g. <code>.claude/skills/my-skill</code>) already exists and wasn't created by taken, it asks before replacing it.</p>
 <p>Decline to keep your local edits. Use <a href="../save/"><code>taken save</code></a> to push them back to the registry first.</p>
 <h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">cd</span><span class="w"> </span>my-project
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>taken<span class="w"> </span>use
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># → fuzzy picker → select react-best-practices, typescript</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># → copies to .agents/skills/react-best-practices/ and .agents/skills/typescript/</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># → links .claude/skills/react-best-practices/ and .claude/skills/typescript/</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># → tracked in ~/.taken/projects.yaml</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">cd</span><span class="w"> </span>my-project
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>taken<span class="w"> </span>use
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># → fuzzy picker → select react-best-practices, typescript</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># → checkbox: which mirror folders? → .claude/skills</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1"># → copies to .agents/skills/react-best-practices/ and .agents/skills/typescript/</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1"># → links .claude/skills/react-best-practices/ and .claude/skills/typescript/</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># → tracked in ~/.taken/projects.yaml</span>
 </code></pre></div>
 
 
